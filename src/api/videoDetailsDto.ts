@@ -10,7 +10,6 @@
  * OpenAPI spec version: v1
  */
 import type { CategoryDto } from './categoryDto';
-import type { GeoLocationDto } from './geoLocationDto';
 import type { PlaylistDto } from './playlistDto';
 
 export interface VideoDetailsDto {
@@ -19,10 +18,10 @@ export interface VideoDetailsDto {
   /** @nullable */
   description?: string | null;
   tags: string[];
-  isAiTemplateInProgress?: boolean;
-  location?: GeoLocationDto;
-  /** @nullable */
-  locationDescription?: string | null;
+  isAiTitleInProgress: boolean;
+  isAiDescriptionInProgress: boolean;
+  isAiTagsInProgress: boolean;
+  isAiPlaylistSuggestionInProgress: boolean;
   playlists: PlaylistDto[];
   category?: CategoryDto;
   /** @nullable */

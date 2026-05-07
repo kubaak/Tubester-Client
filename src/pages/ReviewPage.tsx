@@ -1,8 +1,9 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { VideoSelect } from '@/feautures/videos/components/VideoSelect';
+import { PlaylistSelect } from '@/feautures/videos/components/PlaylistSelect';
 import { useRadixConfirmDialog } from '@/components/dialogs/useRadixConfirmDialog';
 import {
   getGetApiVideosVideoIdQueryKey,
@@ -10,7 +11,7 @@ import {
   usePostApiVideosSaveDraft,
   usePostApiVideosUpdate,
 } from '@/api/videos/videos';
-import { VideoVisibility, type UpdateVideoMetadataRequest } from '@/api';
+import { VideoVisibility, type PlaylistDto, type UpdateVideoMetadataRequest } from '@/api';
 
 import { useVideoIdParam } from '@/feautures/videos/hooks/useVideoIdParam';
 import { useVideoSnapshotSync } from '@/feautures/videos/hooks/useVideoSnapshotSync';
@@ -26,6 +27,10 @@ function toTags(tagsText: string): string[] {
     .split(/[\n,]/g)
     .map((tag) => tag.trim())
     .filter((tag) => tag.length > 0);
+}
+
+function toPlaylistIds(playlists: PlaylistDto[]): string[] {
+  return playlists.map((playlist) => playlist.id).filter((id): id is string => Boolean(id));
 }
 
 export default function ReviewPage() {
@@ -56,7 +61,12 @@ export default function ReviewPage() {
       refetchOnWindowFocus: false,
       refetchInterval: (query) => {
         const data = query.state.data?.data;
-        if (data?.isAiTemplateInProgress === true) {
+        if (
+          data?.isAiTitleInProgress === true ||
+          data?.isAiDescriptionInProgress === true ||
+          data?.isAiTagsInProgress === true ||
+          data?.isAiPlaylistSuggestionInProgress === true
+        ) {
           return 5000;
         }
         return false;
@@ -65,8 +75,28 @@ export default function ReviewPage() {
   });
 
   const videoDetails = videoDetailsQuery.data?.data;
-  const isAiTemplateInProgress = videoDetails?.isAiTemplateInProgress === true;
-  const isFormLocked = isAiTemplateInProgress;
+
+  const isAiTitleInProgress = videoDetails?.isAiTitleInProgress === true;
+  const isAiDescriptionInProgress = videoDetails?.isAiDescriptionInProgress === true;
+  const isAiTagsInProgress = videoDetails?.isAiTagsInProgress === true;
+  const isAiPlaylistSuggestionInProgress = videoDetails?.isAiPlaylistSuggestionInProgress === true;
+  const isAiInProgress =
+    isAiTitleInProgress || isAiDescriptionInProgress || isAiTagsInProgress || isAiPlaylistSuggestionInProgress;
+  const isFormLocked = isAiInProgress;
+
+  const [selectedPlaylists, setSelectedPlaylists] = useState<PlaylistDto[]>([]);
+  const [arePlaylistsDirty, setArePlaylistsDirty] = useState(false);
+
+  useEffect(() => {
+    if (!videoDetails) {
+      setSelectedPlaylists([]);
+      setArePlaylistsDirty(false);
+      return;
+    }
+
+    setSelectedPlaylists(videoDetails.playlists ?? []);
+    setArePlaylistsDirty(false);
+  }, [videoId, videoDetails]);
 
   useVideoSnapshotSync({
     videoDetails,
@@ -78,22 +108,30 @@ export default function ReviewPage() {
 
   const handleVideoChange = useCallback(
     async (nextVideoId: string) => {
-      if (isDirty) {
+      if (isDirty || arePlaylistsDirty) {
         const ok = await confirm('You have unsaved changes. Switch video and discard them?');
         if (!ok) return;
       }
+
       setVideoId(nextVideoId);
     },
-    [isDirty, confirm, setVideoId],
+    [isDirty, arePlaylistsDirty, confirm, setVideoId],
   );
 
+  const handlePlaylistRemove = useCallback((playlistId: string) => {
+    setSelectedPlaylists((current) => current.filter((playlist) => playlist.id !== playlistId));
+    setArePlaylistsDirty(true);
+  }, []);
+
   const canSubmit = videoId.length > 0 && !isFormLocked;
+  const hasUnsavedChanges = isDirty || arePlaylistsDirty;
 
   const buildRequest = (values: ReviewFormValues): UpdateVideoMetadataRequest => ({
     videoId,
     title: values.title.trim().length === 0 ? null : values.title.trim(),
     description: values.description.trim().length === 0 ? null : values.description,
     tags: toTags(values.tagsText),
+    playlistIds: toPlaylistIds(selectedPlaylists),
   });
 
   const onSaveDraft = handleSubmit(async (values) => {
@@ -102,6 +140,8 @@ export default function ReviewPage() {
 
     await saveDraftMutation.mutateAsync({ data: buildRequest(values) });
     await queryClient.invalidateQueries({ queryKey: getGetApiVideosVideoIdQueryKey(videoId) });
+
+    setArePlaylistsDirty(false);
   });
 
   const onSubmitToYouTube = handleSubmit(async (values) => {
@@ -110,6 +150,8 @@ export default function ReviewPage() {
 
     await updateVideoMutation.mutateAsync({ data: buildRequest(values) });
     await queryClient.invalidateQueries({ queryKey: getGetApiVideosVideoIdQueryKey(videoId) });
+
+    setArePlaylistsDirty(false);
   });
 
   const defaultVisibilities = useMemo(() => [VideoVisibility.Unlisted], []);
@@ -121,7 +163,8 @@ export default function ReviewPage() {
           <h1 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">Review video details</h1>
 
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
-            Review and edit your title, description, and tags before saving a draft or sending the changes to YouTube.
+            Review and edit your title, description, tags, and playlists before saving a draft or sending the changes to
+            YouTube.
           </p>
         </div>
 
@@ -139,14 +182,14 @@ export default function ReviewPage() {
                 />
               </div>
 
-              {isAiTemplateInProgress && (
+              {isAiInProgress && (
                 <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
                   AI suggestions are still being prepared. Editing is temporarily locked until generation is complete.
                 </div>
               )}
 
               {videoId ? (
-                <fieldset disabled={isFormLocked} className="space-y-4">
+                <fieldset className="space-y-4">
                   <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
                     <div className="mb-4">
                       <h2 className="text-sm font-semibold text-slate-900">Video details</h2>
@@ -173,6 +216,7 @@ export default function ReviewPage() {
                             id="title"
                             type="text"
                             {...register('title')}
+                            disabled={isAiTitleInProgress}
                             className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-slate-400 focus:ring-4 focus:ring-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
                           />
                         </div>
@@ -185,6 +229,7 @@ export default function ReviewPage() {
                             id="description"
                             {...register('description')}
                             rows={8}
+                            disabled={isAiDescriptionInProgress}
                             className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-slate-400 focus:ring-4 focus:ring-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
                           />
                         </div>
@@ -198,31 +243,17 @@ export default function ReviewPage() {
                             id="tagsText"
                             {...register('tagsText')}
                             rows={4}
+                            disabled={isAiTagsInProgress}
                             className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-slate-400 focus:ring-4 focus:ring-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
                             placeholder="tutorial, youtube growth, creator tips"
                           />
                         </div>
 
-                        <div>
-                          <label className="block text-sm font-medium text-slate-900">Playlists</label>
-                          <p className="mt-1 text-sm text-slate-500">Playlists this video currently belongs to.</p>
-                          <div className="mt-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 min-h-[60px]">
-                            {!videoDetails?.playlists?.length ? (
-                              <p className="text-sm text-slate-400">No playlists</p>
-                            ) : (
-                              <div className="flex flex-wrap gap-2">
-                                {videoDetails.playlists.map((playlist) => (
-                                  <span
-                                    key={playlist.id ?? playlist.name}
-                                    className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-700"
-                                  >
-                                    {playlist.name ?? 'Unnamed playlist'}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </div>
+                        <PlaylistSelect
+                          playlists={selectedPlaylists}
+                          onRemove={handlePlaylistRemove}
+                          disabled={isAiPlaylistSuggestionInProgress}
+                        />
                       </div>
                     )}
                   </div>
@@ -261,7 +292,7 @@ export default function ReviewPage() {
                         <button
                           type="button"
                           onClick={onSaveDraft}
-                          disabled={!canSubmit || isSubmitting || saveDraftMutation.isPending || !isDirty}
+                          disabled={!canSubmit || isSubmitting || saveDraftMutation.isPending || !hasUnsavedChanges}
                           className="inline-flex items-center justify-center rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           {saveDraftMutation.isPending ? 'Saving draft…' : 'Save draft'}
@@ -283,8 +314,8 @@ export default function ReviewPage() {
                 <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-8 text-sm text-slate-500">
                   <p className="font-medium text-slate-700">Choose a video to get started</p>
                   <p className="mt-2">
-                    Once selected, you’ll be able to review the title, description, and tags, then save a draft or
-                    submit the changes to YouTube.
+                    Once selected, you'll be able to review the title, description, tags, and playlists, then save a
+                    draft or submit the changes to YouTube.
                   </p>
                 </div>
               )}

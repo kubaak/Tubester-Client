@@ -29,7 +29,6 @@ import * as axios from 'axios';
 import type { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
 
 import type {
-  AiTemplateEnqueueResult,
   AiVideoTemplateRequest,
   CopyVideoTemplateRequest,
   GetVideosRequest,
@@ -115,12 +114,12 @@ export const usePostApiVideosCopyTemplate = <TError = AxiosError<ProblemDetails>
   return useMutation(getPostApiVideosCopyTemplateMutationOptions(options), queryClient);
 };
 /**
- * @summary Improve video metadata using AI
+ * @summary Enqueues AI metadata generation and/or playlist suggestion for a video.
  */
 export const postApiVideosAiTemplate = (
   aiVideoTemplateRequest: AiVideoTemplateRequest,
   options?: AxiosRequestConfig,
-): Promise<AxiosResponse<AiTemplateEnqueueResult>> => {
+): Promise<AxiosResponse<void>> => {
   return axios.default.post(`/api/videos/ai-template`, aiVideoTemplateRequest, options);
 };
 
@@ -165,7 +164,7 @@ export type PostApiVideosAiTemplateMutationBody = AiVideoTemplateRequest;
 export type PostApiVideosAiTemplateMutationError = AxiosError<ProblemDetails>;
 
 /**
- * @summary Improve video metadata using AI
+ * @summary Enqueues AI metadata generation and/or playlist suggestion for a video.
  */
 export const usePostApiVideosAiTemplate = <TError = AxiosError<ProblemDetails>, TContext = unknown>(
   options?: {

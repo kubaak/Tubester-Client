@@ -12,7 +12,6 @@
 
 export * from './accountSettingsDto';
 export * from './actionResult';
-export * from './aiTemplateEnqueueResult';
 export * from './aiVideoTemplateRequest';
 export * from './apiErrorDto';
 export * from './applicationConfigurationDto';
@@ -26,9 +25,11 @@ export * from './channelSyncResult';
 export * from './configurationValueType';
 export * from './copyVideoTemplateRequest';
 export * from './createApplicationConfigurationRequest';
+export * from './creditBalanceResponse';
+export * from './creditGrantRequest';
+export * from './creditGrantResponse';
 export * from './draftDecisionDto';
 export * from './draftDecisionResultDto';
-export * from './geoLocationDto';
 export * from './getApiAuthLoginGoogleParams';
 export * from './getApiAuthLoginGoogleWriteParams';
 export * from './getVideosRequest';

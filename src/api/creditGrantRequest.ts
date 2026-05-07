@@ -10,7 +10,7 @@
  * OpenAPI spec version: v1
  */
 
-export interface GeoLocationDto {
-  latitude?: number;
-  longitude?: number;
+export interface CreditGrantRequest {
+  userId?: string;
+  amount?: number;
 }

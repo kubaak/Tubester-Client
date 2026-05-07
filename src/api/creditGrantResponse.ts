@@ -10,13 +10,9 @@
  * OpenAPI spec version: v1
  */
 
-export interface SearchSuggestedRepliesRequest {
-  /** @nullable */
-  videoId?: string | null;
-  /** @nullable */
-  originalComment?: string | null;
-  /** @nullable */
-  pageSize?: number | null;
-  /** @nullable */
-  pageToken?: string | null;
+export interface CreditGrantResponse {
+  success?: boolean;
+  alreadyProcessed?: boolean;
+  newBalance?: number;
+  message?: string;
 }

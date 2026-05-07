@@ -11,7 +11,7 @@
  */
 
 export interface PlaylistDto {
-  id?: string;
+  id: string;
   /** @nullable */
   name?: string | null;
 }

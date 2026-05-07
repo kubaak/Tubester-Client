@@ -10,6 +10,13 @@
  * OpenAPI spec version: v1
  */
 
-export interface AiTemplateEnqueueResult {
-  jobId?: string;
+/**
+ * Response DTO for credit balance query
+ */
+export interface CreditBalanceResponse {
+  balance?: number;
+  /** @nullable */
+  periodStartUtc?: string | null;
+  /** @nullable */
+  periodEndUtc?: string | null;
 }

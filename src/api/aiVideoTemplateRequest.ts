@@ -11,8 +11,8 @@
  */
 
 export interface AiVideoTemplateRequest {
-  targetVideoId?: string;
-  promptEnrichment?: string;
+  targetVideoId: string;
+  promptEnrichment: string;
   generateTitle?: boolean;
   generateDescription?: boolean;
   generateTags?: boolean;
