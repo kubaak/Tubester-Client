@@ -18,4 +18,6 @@ export interface UpdateVideoMetadataRequest {
   description?: string | null;
   /** @nullable */
   tags?: string[] | null;
+  /** @nullable */
+  playlistIds?: string[] | null;
 }

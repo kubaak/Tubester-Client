@@ -1,11 +1,13 @@
+import { useMemo, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 
 import { VideoSelect } from '@/feautures/videos/components/VideoSelect';
 import { useRadixConfirmDialog } from '@/components/dialogs/useRadixConfirmDialog';
-import { usePostApiVideosAiTemplate } from '@/api/videos/videos';
+import { useGetApiVideosVideoId } from '@/api/videos/videos';
 import { VideoVisibility, type AiVideoTemplateRequest } from '@/api';
-import { useMemo } from 'react';
+import { AiOptionCard } from '@/feautures/videos/components/AiOptionCard';
+import { useAiTemplateOperationMutation } from '@/feautures/videos/hooks/useAiTemplateOperationMutation';
 
 type GenerateFormValues = {
   targetVideoId: string;
@@ -16,10 +18,23 @@ type GenerateFormValues = {
   suggestPlaylists: boolean;
 };
 
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return 'Failed to generate suggestions.';
+}
+
+const DEFAULT_VISIBILITIES = [VideoVisibility.Unlisted];
+
 export default function ImprovePage() {
   const navigate = useNavigate();
   const { confirm, confirmDialog } = useRadixConfirmDialog();
-  const aiTemplateMutation = usePostApiVideosAiTemplate();
+  const aiTemplateMutation = useAiTemplateOperationMutation();
+
+  const isGeneratingRef = useRef(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const { control, register, handleSubmit, watch, setValue } = useForm<GenerateFormValues>({
     defaultValues: {
@@ -39,33 +54,123 @@ export default function ImprovePage() {
   const generateTags = watch('generateTags');
   const suggestPlaylists = watch('suggestPlaylists');
 
-  const canGenerate =
-    targetVideoId.length > 0 &&
-    !aiTemplateMutation.isPending &&
-    (promptEnrichment.trim().length > 0 || generateTitle || generateDescription || generateTags || suggestPlaylists);
+  const videoDetailsQuery = useGetApiVideosVideoId(targetVideoId, {
+    query: {
+      enabled: targetVideoId.length > 0,
+    },
+  });
+
+  const videoDetails = videoDetailsQuery.data?.data;
+
+  const isTitleInProgress = videoDetails?.isAiTitleInProgress === true;
+  const isDescriptionInProgress = videoDetails?.isAiDescriptionInProgress === true;
+  const isTagsInProgress = videoDetails?.isAiTagsInProgress === true;
+  const isPlaylistSuggestionInProgress = videoDetails?.isAiPlaylistSuggestionInProgress === true;
+
+  const canSelectTitle = !isTitleInProgress;
+  const canSelectDescription = !isDescriptionInProgress;
+  const canSelectTags = !isTagsInProgress;
+  const canSelectPlaylists = !isPlaylistSuggestionInProgress;
+
+  const hasSelectedAvailableOperation =
+    (generateTitle && canSelectTitle) ||
+    (generateDescription && canSelectDescription) ||
+    (generateTags && canSelectTags) ||
+    (suggestPlaylists && canSelectPlaylists);
+
+  const hasPromptEnrichment = promptEnrichment.trim().length > 0;
+
+  const canGenerate = targetVideoId.length > 0 && hasPromptEnrichment && !isGenerating && hasSelectedAvailableOperation;
 
   const onGenerate = handleSubmit(async (values) => {
-    const ok = await confirm('Improve this video with AI?');
-    if (!ok) return;
+    if (isGeneratingRef.current) {
+      return;
+    }
 
-    const request: AiVideoTemplateRequest = {
-      targetVideoId: values.targetVideoId,
-      promptEnrichment: values.promptEnrichment.trim(),
-      generateTitle: values.generateTitle,
-      generateDescription: values.generateDescription,
-      generateTags: values.generateTags,
-      suggestPlaylists: values.suggestPlaylists,
-    };
+    isGeneratingRef.current = true;
+    setIsGenerating(true);
+
+    const operationId = crypto.randomUUID();
 
     try {
-      await aiTemplateMutation.mutateAsync({ data: request });
+      const request: AiVideoTemplateRequest = {
+        targetVideoId: values.targetVideoId,
+        promptEnrichment: values.promptEnrichment.trim(),
+        generateTitle: values.generateTitle && canSelectTitle,
+        generateDescription: values.generateDescription && canSelectDescription,
+        generateTags: values.generateTags && canSelectTags,
+        suggestPlaylists: values.suggestPlaylists && canSelectPlaylists,
+      };
+
+      const hasAnyRequestedOperation =
+        request.generateTitle || request.generateDescription || request.generateTags || request.suggestPlaylists;
+
+      if (!hasAnyRequestedOperation) {
+        return;
+      }
+
+      const ok = await confirm('Improve this video with AI?');
+      if (!ok) {
+        return;
+      }
+
+      await aiTemplateMutation.mutateAsync({
+        data: request,
+        operationId,
+      });
+
       navigate(`/review?videoId=${encodeURIComponent(values.targetVideoId)}`);
     } catch {
-      // error already exposed via isError
+      // Error is displayed below.
+    } finally {
+      isGeneratingRef.current = false;
+      setIsGenerating(false);
     }
   });
 
-  const defaultVisibilities = useMemo(() => [VideoVisibility.Unlisted], []);
+  const optionCards = useMemo(
+    () => [
+      {
+        label: 'Title',
+        description: 'Make stronger, more clickable title.',
+        inProgress: isTitleInProgress,
+        disabled: !canSelectTitle,
+        registration: register('generateTitle'),
+      },
+      {
+        label: 'Description',
+        description: 'Make clearer, more useful video description.',
+        inProgress: isDescriptionInProgress,
+        disabled: !canSelectDescription,
+        registration: register('generateDescription'),
+      },
+      {
+        label: 'Tags',
+        description: 'Suggest tags that better match the content.',
+        inProgress: isTagsInProgress,
+        disabled: !canSelectTags,
+        registration: register('generateTags'),
+      },
+      {
+        label: 'Suggest Playlists',
+        description: 'Suggest playlists to add this video to.',
+        inProgress: isPlaylistSuggestionInProgress,
+        disabled: !canSelectPlaylists,
+        registration: register('suggestPlaylists'),
+      },
+    ],
+    [
+      canSelectDescription,
+      canSelectPlaylists,
+      canSelectTags,
+      canSelectTitle,
+      isDescriptionInProgress,
+      isPlaylistSuggestionInProgress,
+      isTagsInProgress,
+      isTitleInProgress,
+      register,
+    ],
+  );
 
   return (
     <div className="min-h-full bg-slate-50/70">
@@ -77,39 +182,49 @@ export default function ImprovePage() {
 
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
             Select a video that you want to improve, add a short description or context, and let AI prepare title,
-            description, and tag suggestions for you. You’ll review and edit everything before anything is applied.
+            description, tag, and playlist suggestions for you. You’ll review and edit everything before anything is
+            applied.
           </p>
         </div>
 
-        <form className="space-y-6">
+        <form className="space-y-6" onSubmit={onGenerate}>
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
             <div className="grid gap-6">
-              <div>
-                <Controller
-                  control={control}
-                  name="targetVideoId"
-                  render={({ field }) => (
-                    <VideoSelect
-                      label="Choose your video"
-                      value={field.value}
-                      defaultVisibilities={defaultVisibilities}
-                      onChange={field.onChange}
-                      onSelect={(video) => setValue('promptEnrichment', video.title ?? 'e.g., Funny cat compilation')}
-                      placeholder="Start typing or pick a video…"
-                      disabled={aiTemplateMutation.isPending}
-                    />
-                  )}
-                />
-              </div>
+              <Controller
+                control={control}
+                name="targetVideoId"
+                render={({ field }) => (
+                  <VideoSelect
+                    label="Choose your video"
+                    value={field.value}
+                    defaultVisibilities={DEFAULT_VISIBILITIES}
+                    onChange={field.onChange}
+                    onSelect={(video) => {
+                      const currentPrompt = promptEnrichment.trim();
 
-              <fieldset disabled={aiTemplateMutation.isPending} className="space-y-6">
+                      if (!currentPrompt && video.title) {
+                        setValue('promptEnrichment', video.title, {
+                          shouldDirty: true,
+                          shouldTouch: true,
+                        });
+                      }
+                    }}
+                    placeholder="Start typing or pick a video…"
+                    disabled={isGenerating}
+                  />
+                )}
+              />
+
+              <fieldset disabled={isGenerating} className="space-y-6">
                 <div>
                   <label htmlFor="promptEnrichment" className="block text-sm font-medium text-slate-900">
                     Tell the AI what this video is about
                   </label>
+
                   <p className="mt-1 text-sm text-slate-500">
                     Add context, audience, tone, keywords, or anything you want the AI to consider.
                   </p>
+
                   <textarea
                     id="promptEnrichment"
                     {...register('promptEnrichment')}
@@ -122,73 +237,29 @@ export default function ImprovePage() {
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
                   <div className="mb-4">
                     <h2 className="text-sm font-semibold text-slate-900">What should the AI improve?</h2>
+
                     <p className="mt-1 text-sm text-slate-500">
-                      Choose which parts you want to improve. You can select one, two, or all three.
+                      Choose which parts you want to improve. You can select one, several, or all available options.
                     </p>
                   </div>
 
                   <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                    <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-slate-300 hover:shadow">
-                      <input
-                        type="checkbox"
-                        {...register('generateTitle')}
-                        className="mt-1 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-400"
+                    {optionCards.map((option) => (
+                      <AiOptionCard
+                        key={option.label}
+                        label={option.label}
+                        description={option.description}
+                        inProgress={option.inProgress}
+                        disabled={option.disabled}
+                        registration={option.registration}
                       />
-                      <div>
-                        <div className="text-sm font-medium text-slate-900">Title</div>
-                        <div className="mt-1 text-xs leading-5 text-slate-500">
-                          Make stronger, more clickable title.
-                        </div>
-                      </div>
-                    </label>
-
-                    <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-slate-300 hover:shadow">
-                      <input
-                        type="checkbox"
-                        {...register('generateDescription')}
-                        className="mt-1 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-400"
-                      />
-                      <div>
-                        <div className="text-sm font-medium text-slate-900">Description</div>
-                        <div className="mt-1 text-xs leading-5 text-slate-500">
-                          Make clearer, more useful video description.
-                        </div>
-                      </div>
-                    </label>
-
-                    <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-slate-300 hover:shadow">
-                      <input
-                        type="checkbox"
-                        {...register('generateTags')}
-                        className="mt-1 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-400"
-                      />
-                      <div>
-                        <div className="text-sm font-medium text-slate-900">Tags</div>
-                        <div className="mt-1 text-xs leading-5 text-slate-500">
-                          Suggest tags that better match the content.
-                        </div>
-                      </div>
-                    </label>
-
-                    <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-slate-300 hover:shadow">
-                      <input
-                        type="checkbox"
-                        {...register('suggestPlaylists')}
-                        className="mt-1 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-400"
-                      />
-                      <div>
-                        <div className="text-sm font-medium text-slate-900">Suggest Playlists</div>
-                        <div className="mt-1 text-xs leading-5 text-slate-500">
-                          Suggest playlists to add this video to.
-                        </div>
-                      </div>
-                    </label>
+                    ))}
                   </div>
                 </div>
 
                 {aiTemplateMutation.isError && (
                   <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                    {(aiTemplateMutation.error as any)?.message ?? 'Failed to generate suggestions.'}
+                    {getErrorMessage(aiTemplateMutation.error)}
                   </div>
                 )}
 
@@ -198,12 +269,11 @@ export default function ImprovePage() {
                   </p>
 
                   <button
-                    type="button"
-                    onClick={onGenerate}
+                    type="submit"
                     disabled={!canGenerate}
                     className="inline-flex items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-4 focus:ring-slate-300 disabled:cursor-not-allowed disabled:bg-slate-300"
                   >
-                    {aiTemplateMutation.isPending ? 'Improving video…' : 'Improve video'}
+                    {isGenerating ? 'Improving video…' : 'Improve video'}
                   </button>
                 </div>
               </fieldset>
