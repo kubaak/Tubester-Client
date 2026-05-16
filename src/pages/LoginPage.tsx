@@ -1,11 +1,25 @@
+import { useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
+
+function getLoginErrorMessage(error: string | null): string | null {
+  switch (error) {
+    case 'external-login-failed':
+      return 'Google sign-in failed or expired. Please try signing in again. If it keeps happening, clear site data for Tubester and retry.';
+    default:
+      return null;
+  }
+}
 
 export default function LoginPage() {
   const { login, isLoading } = useAuth();
 
+  const searchParams = useMemo(() => new URLSearchParams(window.location.search), []);
+
+  const loginError = getLoginErrorMessage(searchParams.get('error'));
+
   const handleGoogleLogin = (): void => {
-    const returnUrl = new URLSearchParams(window.location.search).get('returnUrl') || '/';
+    const returnUrl = searchParams.get('returnUrl') || '/';
     login(returnUrl);
   };
 
@@ -13,7 +27,6 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gradient-surface flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="glass rounded-2xl p-8 shadow-dramatic border border-border/50">
-          {/* Logo and Title */}
           <div className="text-center mb-8">
             <img
               src="/tubester_logo.png"
@@ -26,7 +39,12 @@ export default function LoginPage() {
             <p className="text-muted-foreground">Sign in to manage your YouTube with AI</p>
           </div>
 
-          {/* Login Form */}
+          {loginError && (
+            <div className="mb-6 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              {loginError}
+            </div>
+          )}
+
           <div className="space-y-6">
             <Button
               onClick={handleGoogleLogin}
@@ -54,7 +72,6 @@ export default function LoginPage() {
               {isLoading ? 'Signing in...' : 'Sign in with Google'}
             </Button>
 
-            {/* Divider */}
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t border-border/50" />
@@ -64,7 +81,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Features */}
             <div className="space-y-3">
               <div className="flex items-center text-sm text-muted-foreground">
                 <div className="w-2 h-2 bg-success rounded-full mr-3" />
@@ -81,7 +97,6 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Footer */}
           <div className="mt-8 pt-6 border-t border-border/30">
             <p className="text-center text-xs text-muted-foreground">
               By continuing, you agree to our{' '}
@@ -96,7 +111,6 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Beta Badge */}
         <div className="text-center mt-6">
           <div className="inline-flex items-center space-x-2 px-4 py-2 bg-primary/10 text-primary text-sm font-medium rounded-full border border-primary/20">
             <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
