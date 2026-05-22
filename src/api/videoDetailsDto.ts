@@ -28,4 +28,5 @@ export interface VideoDetailsDto {
   defaultLanguage?: string | null;
   /** @nullable */
   defaultAudioLanguage?: string | null;
+  thumbnailUrl: string;
 }

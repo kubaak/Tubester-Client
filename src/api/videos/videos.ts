@@ -34,6 +34,7 @@ import type {
   GetVideosRequest,
   PostApiVideosResyncParams,
   ProblemDetails,
+  SaveVideoDraftRequest,
   UpdateVideoMetadataRequest,
   VideoDetailsDto,
   VideoListItemDtoPagedResult,
@@ -441,10 +442,10 @@ export const usePostApiVideosUpdate = <TError = AxiosError<ProblemDetails>, TCon
  * @summary Saves draft video metadata (title, description, tags) without submitting to YouTube.
  */
 export const postApiVideosSaveDraft = (
-  updateVideoMetadataRequest: UpdateVideoMetadataRequest,
+  saveVideoDraftRequest: SaveVideoDraftRequest,
   options?: AxiosRequestConfig,
 ): Promise<AxiosResponse<VideoDetailsDto>> => {
-  return axios.default.post(`/api/videos/save-draft`, updateVideoMetadataRequest, options);
+  return axios.default.post(`/api/videos/save-draft`, saveVideoDraftRequest, options);
 };
 
 export const getPostApiVideosSaveDraftMutationOptions = <
@@ -454,14 +455,14 @@ export const getPostApiVideosSaveDraftMutationOptions = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof postApiVideosSaveDraft>>,
     TError,
-    { data: UpdateVideoMetadataRequest },
+    { data: SaveVideoDraftRequest },
     TContext
   >;
   axios?: AxiosRequestConfig;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof postApiVideosSaveDraft>>,
   TError,
-  { data: UpdateVideoMetadataRequest },
+  { data: SaveVideoDraftRequest },
   TContext
 > => {
   const mutationKey = ['postApiVideosSaveDraft'];
@@ -473,7 +474,7 @@ export const getPostApiVideosSaveDraftMutationOptions = <
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof postApiVideosSaveDraft>>,
-    { data: UpdateVideoMetadataRequest }
+    { data: SaveVideoDraftRequest }
   > = (props) => {
     const { data } = props ?? {};
 
@@ -484,7 +485,7 @@ export const getPostApiVideosSaveDraftMutationOptions = <
 };
 
 export type PostApiVideosSaveDraftMutationResult = NonNullable<Awaited<ReturnType<typeof postApiVideosSaveDraft>>>;
-export type PostApiVideosSaveDraftMutationBody = UpdateVideoMetadataRequest;
+export type PostApiVideosSaveDraftMutationBody = SaveVideoDraftRequest;
 export type PostApiVideosSaveDraftMutationError = AxiosError<ProblemDetails>;
 
 /**
@@ -495,7 +496,7 @@ export const usePostApiVideosSaveDraft = <TError = AxiosError<ProblemDetails>, T
     mutation?: UseMutationOptions<
       Awaited<ReturnType<typeof postApiVideosSaveDraft>>,
       TError,
-      { data: UpdateVideoMetadataRequest },
+      { data: SaveVideoDraftRequest },
       TContext
     >;
     axios?: AxiosRequestConfig;
@@ -504,7 +505,7 @@ export const usePostApiVideosSaveDraft = <TError = AxiosError<ProblemDetails>, T
 ): UseMutationResult<
   Awaited<ReturnType<typeof postApiVideosSaveDraft>>,
   TError,
-  { data: UpdateVideoMetadataRequest },
+  { data: SaveVideoDraftRequest },
   TContext
 > => {
   return useMutation(getPostApiVideosSaveDraftMutationOptions(options), queryClient);

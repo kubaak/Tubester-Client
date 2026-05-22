@@ -42,7 +42,7 @@ export const VideoSelectTrigger = forwardRef<HTMLButtonElement, Props>(function 
                 loading="lazy"
               />
             )}
-            <span className="truncate max-w-[28ch]" title={selected.title ?? selected.videoId ?? ''}>
+            <span className="truncate" title={selected.title ?? selected.videoId ?? ''}>
               {selected.title ?? selected.videoId}
             </span>
           </span>

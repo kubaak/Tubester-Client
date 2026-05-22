@@ -10,12 +10,14 @@
  * OpenAPI spec version: v1
  */
 
-export interface AiVideoTemplateRequest {
-  targetVideoId: string;
-  promptEnrichment: string;
-  generateTitle?: boolean;
-  generateDescription?: boolean;
-  generateTags?: boolean;
-  suggestPlaylists?: boolean;
-  expectedCreditCost?: number;
+export interface SaveVideoDraftRequest {
+  videoId?: string;
+  /** @nullable */
+  title?: string | null;
+  /** @nullable */
+  description?: string | null;
+  /** @nullable */
+  tags?: string[] | null;
+  /** @nullable */
+  playlistIds?: string[] | null;
 }

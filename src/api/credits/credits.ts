@@ -25,7 +25,7 @@ import type {
 import * as axios from 'axios';
 import type { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
 
-import type { CreditBalanceResponse, ProblemDetails } from './..';
+import type { CreditActionCosts, CreditBalanceResponse, ProblemDetails } from './..';
 
 /**
  * @summary Gets the current credit balance for the authenticated user.
@@ -123,6 +123,110 @@ export function useGetApiCreditsBalance<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getGetApiCreditsBalanceQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Gets the current costs for credit actions.
+ */
+export const getApiCreditsCosts = (options?: AxiosRequestConfig): Promise<AxiosResponse<CreditActionCosts>> => {
+  return axios.default.get(`/api/credits/costs`, options);
+};
+
+export const getGetApiCreditsCostsQueryKey = () => {
+  return [`/api/credits/costs`] as const;
+};
+
+export const getGetApiCreditsCostsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getApiCreditsCosts>>,
+  TError = AxiosError<ProblemDetails>,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiCreditsCosts>>, TError, TData>>;
+  axios?: AxiosRequestConfig;
+}) => {
+  const { query: queryOptions, axios: axiosOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetApiCreditsCostsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiCreditsCosts>>> = ({ signal }) =>
+    getApiCreditsCosts({ signal, ...axiosOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getApiCreditsCosts>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetApiCreditsCostsQueryResult = NonNullable<Awaited<ReturnType<typeof getApiCreditsCosts>>>;
+export type GetApiCreditsCostsQueryError = AxiosError<ProblemDetails>;
+
+export function useGetApiCreditsCosts<
+  TData = Awaited<ReturnType<typeof getApiCreditsCosts>>,
+  TError = AxiosError<ProblemDetails>,
+>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiCreditsCosts>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiCreditsCosts>>,
+          TError,
+          Awaited<ReturnType<typeof getApiCreditsCosts>>
+        >,
+        'initialData'
+      >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetApiCreditsCosts<
+  TData = Awaited<ReturnType<typeof getApiCreditsCosts>>,
+  TError = AxiosError<ProblemDetails>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiCreditsCosts>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiCreditsCosts>>,
+          TError,
+          Awaited<ReturnType<typeof getApiCreditsCosts>>
+        >,
+        'initialData'
+      >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetApiCreditsCosts<
+  TData = Awaited<ReturnType<typeof getApiCreditsCosts>>,
+  TError = AxiosError<ProblemDetails>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiCreditsCosts>>, TError, TData>>;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Gets the current costs for credit actions.
+ */
+
+export function useGetApiCreditsCosts<
+  TData = Awaited<ReturnType<typeof getApiCreditsCosts>>,
+  TError = AxiosError<ProblemDetails>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiCreditsCosts>>, TError, TData>>;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetApiCreditsCostsQueryOptions(options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;

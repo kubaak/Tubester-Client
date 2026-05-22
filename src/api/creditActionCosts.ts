@@ -10,12 +10,16 @@
  * OpenAPI spec version: v1
  */
 
-export interface AiVideoTemplateRequest {
-  targetVideoId: string;
-  promptEnrichment: string;
-  generateTitle?: boolean;
-  generateDescription?: boolean;
-  generateTags?: boolean;
-  suggestPlaylists?: boolean;
-  expectedCreditCost?: number;
+/**
+ * Response DTO for credit action cost query
+ */
+export interface CreditActionCosts {
+  copyTemplateExecuted: number;
+  videoDetailsSubmitted: number;
+  aiReplyGenerated: number;
+  replyPostedToYouTube: number;
+  aiTitle: number;
+  aiDescription: number;
+  aiTags: number;
+  aiPlaylist: number;
 }

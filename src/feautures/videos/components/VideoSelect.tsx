@@ -14,6 +14,7 @@ type Props = {
   value?: string;
   onChange: (videoId: string) => void;
   onSelect?: (video: VideoListItemDto) => void;
+  initialVideo?: VideoListItemDto | null;
   placeholder?: string;
   disabled?: boolean;
   className?: string;
@@ -29,6 +30,7 @@ export function VideoSelect({
   value,
   onChange,
   onSelect,
+  initialVideo,
   placeholder = 'Select a video…',
   disabled,
   className,
@@ -43,6 +45,20 @@ export function VideoSelect({
   ]);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    if (!initialVideo) {
+      return;
+    }
+
+    setItems((previousItems) => {
+      if (previousItems.some((item) => item.videoId === initialVideo.videoId)) {
+        return previousItems;
+      }
+
+      return [initialVideo, ...previousItems];
+    });
+  }, [initialVideo]);
 
   // Debounce the text filter before sending to server (?title=)
   useEffect(() => {
@@ -107,8 +123,8 @@ export function VideoSelect({
   // Reset paging whenever the *debounced* server filter changes
   useEffect(() => {
     setPageToken(undefined);
-    setItems([]);
-  }, [debouncedFilter, selectedVisibilities]);
+    setItems(initialVideo ? [initialVideo] : []);
+  }, [debouncedFilter, selectedVisibilities, initialVideo]);
 
   const selected = useMemo(() => items.find((i) => i.videoId === value), [items, value]);
 

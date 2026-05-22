@@ -1,22 +1,21 @@
 import { useEffect, useRef } from 'react';
 import type { UseFormGetValues, UseFormReset } from 'react-hook-form';
 import type { VideoDetailsDto } from '@/api';
+import type { VideoFormFields } from '../types/VideoFormFields';
+import { isAnyAiOperationInProgress } from '../../utils/isAnyAiOperationInProgress';
 
-export type SnapshotFormFields = {
-  title: string;
-  description: string;
-  tagsText: string;
-};
-
-export function fromVideoDetails(videoDetails: VideoDetailsDto): SnapshotFormFields {
+export function fromVideoDetails(videoDetails: VideoDetailsDto): VideoFormFields {
   return {
     title: videoDetails.title ?? '',
     description: videoDetails.description ?? '',
     tagsText: (videoDetails.tags ?? []).join(', '),
+    playlistIds: (videoDetails.playlists ?? [])
+      .map((playlist) => playlist.id)
+      .filter((id): id is string => Boolean(id)),
   };
 }
 
-type UseVideoSnapshotSyncOptions<TForm extends SnapshotFormFields> = {
+type UseVideoSnapshotSyncOptions<TForm extends VideoFormFields> = {
   videoDetails: VideoDetailsDto | undefined;
   videoId: string;
   isDirty: boolean;
@@ -28,12 +27,12 @@ type UseVideoSnapshotSyncOptions<TForm extends SnapshotFormFields> = {
  * Safely syncs server video snapshot into form fields.
  *
  * Overwrites form when:
- * - AI generation is running (inputs are locked anyway)
- * - AI generation just finished (was in-progress → not in-progress)
- * - form is not dirty (user hasn't edited anything)
+ * - AI generation is running
+ * - AI generation just finished
+ * - form is not dirty
  * - selected video changed
  */
-export function useVideoSnapshotSync<TForm extends SnapshotFormFields>({
+export function useVideoSnapshotSync<TForm extends VideoFormFields>({
   videoDetails,
   videoId,
   isDirty,
@@ -50,7 +49,7 @@ export function useVideoSnapshotSync<TForm extends SnapshotFormFields>({
 
     const isTargetChanged = lastLoadedVideoIdRef.current !== videoId;
     const wasInProgress = lastInProgressRef.current;
-    const isNowInProgress = videoDetails.isAiTemplateInProgress === true;
+    const isNowInProgress = isAnyAiOperationInProgress(videoDetails);
 
     const aiJustFinished = wasInProgress && !isNowInProgress;
     const shouldOverwrite = isTargetChanged || isNowInProgress || aiJustFinished || !isDirty;

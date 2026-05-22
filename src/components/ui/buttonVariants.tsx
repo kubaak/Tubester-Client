@@ -19,6 +19,7 @@ export const buttonVariants = cva(
           'glass bg-success text-success-foreground shadow-moderate hover:shadow-strong border border-success/20 hover:border-success/30',
         warning:
           'glass bg-warning text-warning-foreground shadow-moderate hover:shadow-strong border border-warning/20 hover:border-warning/30',
+        ai: 'bg-violet-600 text-white shadow-md shadow-violet-200 hover:bg-violet-700',
       },
       size: {
         default: 'h-11 px-6 py-3 text-sm has-[>svg]:px-4',

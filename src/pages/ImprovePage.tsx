@@ -1,288 +1,266 @@
-import { useMemo, useRef, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { useMemo, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { useQueryClient } from '@tanstack/react-query';
+
+import { VideoVisibility, type VideoDetailsDto, type VideoListItemDto } from '@/api';
+import {
+  useGetApiVideosVideoId,
+  getGetApiVideosVideoIdQueryKey,
+  usePostApiVideosUpdate,
+  usePostApiVideosSaveDraft,
+} from '@/api/videos/videos';
 
 import { VideoSelect } from '@/feautures/videos/components/VideoSelect';
-import { useRadixConfirmDialog } from '@/components/dialogs/useRadixConfirmDialog';
-import { useGetApiVideosVideoId } from '@/api/videos/videos';
-import { VideoVisibility, type AiVideoTemplateRequest } from '@/api';
-import { AiOptionCard } from '@/feautures/videos/components/AiOptionCard';
-import { useAiTemplateOperationMutation } from '@/feautures/videos/hooks/useAiTemplateOperationMutation';
 
-type GenerateFormValues = {
-  targetVideoId: string;
-  promptEnrichment: string;
-  generateTitle: boolean;
-  generateDescription: boolean;
-  generateTags: boolean;
-  suggestPlaylists: boolean;
-};
+import { useVideoSnapshotSync } from '@/feautures/videos/improve/hooks/useVideoSnapshotSync';
+import { useVideoIdParam } from '@/feautures/videos/hooks/useVideoIdParam';
 
-function getErrorMessage(error: unknown) {
+import { AiDialog } from '@/feautures/videos/improve/components/AiDialog';
+import { DetailsForm } from '@/feautures/videos/improve/components/DetailsForm';
+import { Actions } from '@/feautures/videos/improve/components/Actions';
+import { ProgressBanner } from '@/feautures/videos/improve/components/ProgressBanner';
+import { ImproveWithAiCard } from '@/feautures/videos/improve/components/ImproveWithAiCard';
+import type { VideoFormFields } from '@/feautures/videos/improve/types/VideoFormFields';
+import { isAnyAiOperationInProgress } from '@/feautures/videos/utils/isAnyAiOperationInProgress';
+
+function parseTags(tagsText: string): string[] {
+  return tagsText
+    .split(',')
+    .map((tag) => tag.trim())
+    .filter((tag) => tag.length > 0);
+}
+
+function getErrorMessage(error: unknown): string {
   if (error instanceof Error) {
     return error.message;
   }
 
-  return 'Failed to generate suggestions.';
+  return 'Something went wrong.';
 }
 
-const DEFAULT_VISIBILITIES = [VideoVisibility.Unlisted];
+function areAllAiOperationsInProgress(videoDetails: VideoDetailsDto | undefined): boolean {
+  if (!videoDetails) {
+    return false;
+  }
+
+  return (
+    videoDetails.isAiTitleInProgress === true &&
+    videoDetails.isAiDescriptionInProgress === true &&
+    videoDetails.isAiTagsInProgress === true &&
+    videoDetails.isAiPlaylistSuggestionInProgress === true
+  );
+}
 
 export default function ImprovePage() {
-  const navigate = useNavigate();
-  const { confirm, confirmDialog } = useRadixConfirmDialog();
-  const aiTemplateMutation = useAiTemplateOperationMutation();
+  const queryClient = useQueryClient();
 
-  const isGeneratingRef = useRef(false);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const { videoId: selectedVideoId, setVideoId: setSelectedVideoId } = useVideoIdParam();
+  const [isImproveDialogOpen, setIsImproveDialogOpen] = useState(false);
+  const [pageError, setPageError] = useState<string | null>(null);
 
-  const { control, register, handleSubmit, watch, setValue } = useForm<GenerateFormValues>({
+  const form = useForm<VideoFormFields>({
     defaultValues: {
-      targetVideoId: '',
-      promptEnrichment: '',
-      generateTitle: true,
-      generateDescription: true,
-      generateTags: true,
-      suggestPlaylists: true,
+      title: '',
+      description: '',
+      tagsText: '',
+      playlistIds: [],
     },
   });
 
-  const targetVideoId = watch('targetVideoId');
-  const promptEnrichment = watch('promptEnrichment');
-  const generateTitle = watch('generateTitle');
-  const generateDescription = watch('generateDescription');
-  const generateTags = watch('generateTags');
-  const suggestPlaylists = watch('suggestPlaylists');
-
-  const videoDetailsQuery = useGetApiVideosVideoId(targetVideoId, {
+  const videoDetailsQuery = useGetApiVideosVideoId(selectedVideoId, {
     query: {
-      enabled: targetVideoId.length > 0,
+      enabled: selectedVideoId.length > 0,
+      refetchInterval: (query) => {
+        const videoDetails = query.state.data?.data;
+
+        return isAnyAiOperationInProgress(videoDetails) ? 3000 : false;
+      },
     },
   });
 
-  const videoDetails = videoDetailsQuery.data?.data;
+  const videoDetails: VideoDetailsDto | undefined = videoDetailsQuery.data?.data;
 
-  const isTitleInProgress = videoDetails?.isAiTitleInProgress === true;
-  const isDescriptionInProgress = videoDetails?.isAiDescriptionInProgress === true;
-  const isTagsInProgress = videoDetails?.isAiTagsInProgress === true;
-  const isPlaylistSuggestionInProgress = videoDetails?.isAiPlaylistSuggestionInProgress === true;
+  const saveDraftMutation = usePostApiVideosSaveDraft();
+  const submitMutation = usePostApiVideosUpdate();
 
-  const canSelectTitle = !isTitleInProgress;
-  const canSelectDescription = !isDescriptionInProgress;
-  const canSelectTags = !isTagsInProgress;
-  const canSelectPlaylists = !isPlaylistSuggestionInProgress;
+  const isAiInProgress = isAnyAiOperationInProgress(videoDetails);
+  const isAiButtonDisabled = areAllAiOperationsInProgress(videoDetails);
 
-  const hasSelectedAvailableOperation =
-    (generateTitle && canSelectTitle) ||
-    (generateDescription && canSelectDescription) ||
-    (generateTags && canSelectTags) ||
-    (suggestPlaylists && canSelectPlaylists);
+  const disabledFields = useMemo(
+    () => ({
+      title: videoDetails?.isAiTitleInProgress === true,
+      description: videoDetails?.isAiDescriptionInProgress === true,
+      tags: videoDetails?.isAiTagsInProgress === true,
+      playlists: videoDetails?.isAiPlaylistSuggestionInProgress === true,
+    }),
+    [videoDetails],
+  );
 
-  const hasPromptEnrichment = promptEnrichment.trim().length > 0;
+  useVideoSnapshotSync({
+    videoDetails,
+    videoId: selectedVideoId,
+    isDirty: form.formState.isDirty,
+    getValues: form.getValues,
+    reset: form.reset,
+  });
 
-  const canGenerate = targetVideoId.length > 0 && hasPromptEnrichment && !isGenerating && hasSelectedAvailableOperation;
-
-  const onGenerate = handleSubmit(async (values) => {
-    if (isGeneratingRef.current) {
+  const invalidateVideoDetails = async () => {
+    if (!selectedVideoId) {
       return;
     }
 
-    isGeneratingRef.current = true;
-    setIsGenerating(true);
+    await queryClient.invalidateQueries({
+      queryKey: getGetApiVideosVideoIdQueryKey(selectedVideoId),
+    });
+  };
 
-    const operationId = crypto.randomUUID();
+  const handleVideoSelected = (videoId: string) => {
+    setSelectedVideoId(videoId);
+    setPageError(null);
+  };
+
+  const buildUpdateRequest = () => {
+    const values = form.getValues();
+
+    return {
+      videoId: selectedVideoId,
+      title: values.title,
+      description: values.description,
+      tags: parseTags(values.tagsText),
+      playlistIds: values.playlistIds,
+    };
+  };
+
+  const handleSaveDraft = async () => {
+    if (!selectedVideoId) {
+      return;
+    }
+
+    setPageError(null);
 
     try {
-      const request: AiVideoTemplateRequest = {
-        targetVideoId: values.targetVideoId,
-        promptEnrichment: values.promptEnrichment.trim(),
-        generateTitle: values.generateTitle && canSelectTitle,
-        generateDescription: values.generateDescription && canSelectDescription,
-        generateTags: values.generateTags && canSelectTags,
-        suggestPlaylists: values.suggestPlaylists && canSelectPlaylists,
-      };
-
-      const hasAnyRequestedOperation =
-        request.generateTitle || request.generateDescription || request.generateTags || request.suggestPlaylists;
-
-      if (!hasAnyRequestedOperation) {
-        return;
-      }
-
-      const ok = await confirm('Improve this video with AI?');
-      if (!ok) {
-        return;
-      }
-
-      await aiTemplateMutation.mutateAsync({
-        data: request,
-        operationId,
+      await saveDraftMutation.mutateAsync({
+        data: buildUpdateRequest(),
       });
 
-      navigate(`/review?videoId=${encodeURIComponent(values.targetVideoId)}`);
-    } catch {
-      // Error is displayed below.
-    } finally {
-      isGeneratingRef.current = false;
-      setIsGenerating(false);
+      form.reset(form.getValues());
+      await invalidateVideoDetails();
+    } catch (error) {
+      setPageError(getErrorMessage(error));
     }
-  });
+  };
 
-  const optionCards = useMemo(
-    () => [
-      {
-        label: 'Title',
-        description: 'Make stronger, more clickable title.',
-        inProgress: isTitleInProgress,
-        disabled: !canSelectTitle,
-        registration: register('generateTitle'),
-      },
-      {
-        label: 'Description',
-        description: 'Make clearer, more useful video description.',
-        inProgress: isDescriptionInProgress,
-        disabled: !canSelectDescription,
-        registration: register('generateDescription'),
-      },
-      {
-        label: 'Tags',
-        description: 'Suggest tags that better match the content.',
-        inProgress: isTagsInProgress,
-        disabled: !canSelectTags,
-        registration: register('generateTags'),
-      },
-      {
-        label: 'Suggest Playlists',
-        description: 'Suggest playlists to add this video to.',
-        inProgress: isPlaylistSuggestionInProgress,
-        disabled: !canSelectPlaylists,
-        registration: register('suggestPlaylists'),
-      },
-    ],
-    [
-      canSelectDescription,
-      canSelectPlaylists,
-      canSelectTags,
-      canSelectTitle,
-      isDescriptionInProgress,
-      isPlaylistSuggestionInProgress,
-      isTagsInProgress,
-      isTitleInProgress,
-      register,
-    ],
-  );
+  const handleSubmitToYouTube = async () => {
+    if (!selectedVideoId) {
+      return;
+    }
+
+    setPageError(null);
+
+    try {
+      await saveDraftMutation.mutateAsync({
+        data: buildUpdateRequest(),
+      });
+
+      await submitMutation.mutateAsync({
+        data: buildUpdateRequest(),
+      });
+
+      form.reset(form.getValues());
+      await invalidateVideoDetails();
+    } catch (error) {
+      setPageError(getErrorMessage(error));
+    }
+  };
+
+  const handleImproveSuccess = async () => {
+    setIsImproveDialogOpen(false);
+    await invalidateVideoDetails();
+  };
+
+  const initialSelectedVideo = useMemo<VideoListItemDto | null>(() => {
+    if (!videoDetails || !selectedVideoId) {
+      return null;
+    }
+
+    return {
+      videoId: selectedVideoId,
+      title: videoDetails.title,
+      thumbnailUrl: videoDetails.thumbnailUrl,
+    };
+  }, [videoDetails, selectedVideoId]);
+
+  const defaultVisibilities = useMemo(() => [VideoVisibility.Unlisted], []);
 
   return (
-    <div className="min-h-full bg-slate-50/70">
-      <div className="mx-auto max-w-4xl px-6 py-10">
-        <div className="mb-8">
-          <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
-            Improve your video with AI
-          </h1>
-
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
-            Select a video that you want to improve, add a short description or context, and let AI prepare title,
-            description, tag, and playlist suggestions for you. You’ll review and edit everything before anything is
-            applied.
-          </p>
-        </div>
-
-        <form className="space-y-6" onSubmit={onGenerate}>
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-            <div className="grid gap-6">
-              <Controller
-                control={control}
-                name="targetVideoId"
-                render={({ field }) => (
-                  <VideoSelect
-                    label="Choose your video"
-                    value={field.value}
-                    defaultVisibilities={DEFAULT_VISIBILITIES}
-                    onChange={field.onChange}
-                    onSelect={(video) => {
-                      const currentPrompt = promptEnrichment.trim();
-
-                      if (!currentPrompt && video.title) {
-                        setValue('promptEnrichment', video.title, {
-                          shouldDirty: true,
-                          shouldTouch: true,
-                        });
-                      }
-                    }}
-                    placeholder="Start typing or pick a video…"
-                    disabled={isGenerating}
-                  />
-                )}
-              />
-
-              <fieldset disabled={isGenerating} className="space-y-6">
-                <div>
-                  <label htmlFor="promptEnrichment" className="block text-sm font-medium text-slate-900">
-                    Tell the AI what this video is about
-                  </label>
-
-                  <p className="mt-1 text-sm text-slate-500">
-                    Add context, audience, tone, keywords, or anything you want the AI to consider.
-                  </p>
-
-                  <textarea
-                    id="promptEnrichment"
-                    {...register('promptEnrichment')}
-                    rows={5}
-                    className="mt-3 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-slate-400 focus:ring-4 focus:ring-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
-                    placeholder="e.g., Funny cat compilation"
-                  />
-                </div>
-
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                  <div className="mb-4">
-                    <h2 className="text-sm font-semibold text-slate-900">What should the AI improve?</h2>
-
-                    <p className="mt-1 text-sm text-slate-500">
-                      Choose which parts you want to improve. You can select one, several, or all available options.
-                    </p>
-                  </div>
-
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                    {optionCards.map((option) => (
-                      <AiOptionCard
-                        key={option.label}
-                        label={option.label}
-                        description={option.description}
-                        inProgress={option.inProgress}
-                        disabled={option.disabled}
-                        registration={option.registration}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                {aiTemplateMutation.isError && (
-                  <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                    {getErrorMessage(aiTemplateMutation.error)}
-                  </div>
-                )}
-
-                <div className="flex flex-col gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-sm text-slate-500">
-                    Suggestions will open in review so you can edit them before applying.
-                  </p>
-
-                  <button
-                    type="submit"
-                    disabled={!canGenerate}
-                    className="inline-flex items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-4 focus:ring-slate-300 disabled:cursor-not-allowed disabled:bg-slate-300"
-                  >
-                    {isGenerating ? 'Improving video…' : 'Improve video'}
-                  </button>
-                </div>
-              </fieldset>
-            </div>
-          </div>
-        </form>
-
-        {confirmDialog}
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
+      <div>
+        <h1 className="text-2xl font-semibold text-slate-950">Improve your video with AI</h1>
+        <p className="mt-1 text-sm text-slate-500">
+          Select a video that you want to improve, add a short description or context, and let AI prepare title,
+          description, tag, and playlist suggestions for you. You'll review and edit everything before anything is
+          applied.
+        </p>
       </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <VideoSelect
+          label="Select a video"
+          value={selectedVideoId}
+          onChange={handleVideoSelected}
+          defaultVisibilities={defaultVisibilities}
+          initialVideo={initialSelectedVideo}
+        />
+      </div>
+
+      {selectedVideoId && videoDetailsQuery.isLoading && (
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-500 shadow-sm">
+          Loading video details...
+        </div>
+      )}
+
+      {selectedVideoId && videoDetailsQuery.isError && (
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">
+          Failed to load video details.
+        </div>
+      )}
+
+      {pageError && (
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">{pageError}</div>
+      )}
+
+      {videoDetails && (
+        <>
+          <ImproveWithAiCard isAiInProgress={isAiButtonDisabled} onImproveClick={() => setIsImproveDialogOpen(true)} />
+
+          <ProgressBanner videoDetails={videoDetails} />
+
+          <DetailsForm
+            register={form.register}
+            watch={form.watch}
+            setValue={form.setValue}
+            disabledFields={disabledFields}
+          />
+
+          <Actions
+            isDirty={form.formState.isDirty}
+            isSaving={saveDraftMutation.isPending}
+            isSubmitting={submitMutation.isPending}
+            disabled={isAiInProgress}
+            onSaveDraft={handleSaveDraft}
+            onSubmitToYouTube={handleSubmitToYouTube}
+          />
+
+          <AiDialog
+            open={isImproveDialogOpen}
+            onOpenChange={setIsImproveDialogOpen}
+            videoId={selectedVideoId}
+            videoTitle={videoDetails.title}
+            videoDetails={videoDetails}
+            onSuccess={handleImproveSuccess}
+          />
+        </>
+      )}
     </div>
   );
 }
