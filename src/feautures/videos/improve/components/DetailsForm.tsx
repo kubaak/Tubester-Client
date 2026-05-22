@@ -1,9 +1,9 @@
 import type { UseFormRegister, UseFormSetValue, UseFormWatch } from 'react-hook-form';
 
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/Textarea';
 import { PlaylistSelect } from '@/feautures/playlists/components/PlaylistSelect';
 import type { VideoFormFields } from '../types/VideoFormFields';
+import { Textarea } from '@/components/ui/Textarea';
 
 export type DetailsFormProps = {
   register: UseFormRegister<VideoFormFields>;
