@@ -6,7 +6,7 @@ const VIDEO_ID_PARAM = 'videoId';
 export function useVideoIdParam() {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const videoId = searchParams.get(VIDEO_ID_PARAM) ?? '';
+  const videoId = searchParams.get(VIDEO_ID_PARAM)?.trim() ?? '';
 
   const setVideoId = useCallback(
     (nextVideoId: string) => {
@@ -16,7 +16,7 @@ export function useVideoIdParam() {
         (previous) => {
           const next = new URLSearchParams(previous);
 
-          if (normalizedVideoId) {
+          if (normalizedVideoId.length > 0) {
             next.set(VIDEO_ID_PARAM, normalizedVideoId);
           } else {
             next.delete(VIDEO_ID_PARAM);
