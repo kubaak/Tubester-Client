@@ -10,7 +10,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/Textarea';
 import { AiOptionCard } from '@/feautures/videos/improve/components/AiOptionCard';
 import { useAiCreditCost, type AiOperationSelection } from '@/feautures/videos/hooks/useAiCreditCost';
 import {
@@ -18,6 +17,7 @@ import {
   type AiTemplateOperationMutationInput,
 } from '@/feautures/videos/hooks/useAiTemplateOperationMutation';
 import type { AiVideoTemplateRequest, VideoDetailsDto } from '@/api';
+import { Textarea } from '@/components/ui/Textarea';
 
 export type AiDialogProps = {
   open: boolean;
