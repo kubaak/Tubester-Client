@@ -8,6 +8,7 @@ import {
   getGetApiVideosVideoIdQueryKey,
   usePostApiVideosUpdate,
   usePostApiVideosSaveDraft,
+  usePostApiVideosResync,
 } from '@/api/videos/videos';
 
 import { VideoSelect } from '@/feautures/videos/components/VideoSelect';
@@ -22,6 +23,7 @@ import { ProgressBanner } from '@/feautures/videos/improve/components/ProgressBa
 import { ImproveWithAiCard } from '@/feautures/videos/improve/components/ImproveWithAiCard';
 import type { VideoFormFields } from '@/feautures/videos/improve/types/VideoFormFields';
 import { isAnyAiOperationInProgress } from '@/feautures/videos/utils/isAnyAiOperationInProgress';
+import { ResyncVideoDialog } from '@/feautures/videos/improve/components/ResyncVideoDialog';
 
 function parseTags(tagsText: string): string[] {
   return tagsText
@@ -56,6 +58,7 @@ export default function ImprovePage() {
 
   const { videoId: selectedVideoId, setVideoId: setSelectedVideoId } = useVideoIdParam();
   const [isImproveDialogOpen, setIsImproveDialogOpen] = useState(false);
+  const [isResyncDialogOpen, setIsResyncDialogOpen] = useState(false);
   const [pageError, setPageError] = useState<string | null>(null);
 
   const form = useForm<VideoFormFields>({
@@ -82,6 +85,7 @@ export default function ImprovePage() {
 
   const saveDraftMutation = usePostApiVideosSaveDraft();
   const submitMutation = usePostApiVideosUpdate();
+  const resyncMutation = usePostApiVideosResync();
 
   const isAiInProgress = isAnyAiOperationInProgress(videoDetails);
   const isAiButtonDisabled = areAllAiOperationsInProgress(videoDetails);
@@ -120,6 +124,12 @@ export default function ImprovePage() {
   };
 
   const buildUpdateRequest = () => {
+    return {
+      videoId: selectedVideoId,
+    };
+  };
+
+  const buildSaveDraftRequest = () => {
     const values = form.getValues();
 
     return {
@@ -140,7 +150,7 @@ export default function ImprovePage() {
 
     try {
       await saveDraftMutation.mutateAsync({
-        data: buildUpdateRequest(),
+        data: buildSaveDraftRequest(),
       });
 
       form.reset(form.getValues());
@@ -159,7 +169,7 @@ export default function ImprovePage() {
 
     try {
       await saveDraftMutation.mutateAsync({
-        data: buildUpdateRequest(),
+        data: buildSaveDraftRequest(),
       });
 
       await submitMutation.mutateAsync({
@@ -176,6 +186,29 @@ export default function ImprovePage() {
   const handleImproveSuccess = async () => {
     setIsImproveDialogOpen(false);
     await invalidateVideoDetails();
+  };
+
+  const handleResyncClick = () => {
+    setIsResyncDialogOpen(true);
+  };
+
+  const handleResyncConfirm = async () => {
+    if (!selectedVideoId) {
+      return;
+    }
+
+    setIsResyncDialogOpen(false);
+    setPageError(null);
+
+    try {
+      await resyncMutation.mutateAsync({
+        params: { videoId: selectedVideoId },
+      });
+
+      await invalidateVideoDetails();
+    } catch (error) {
+      setPageError(getErrorMessage(error));
+    }
   };
 
   const initialSelectedVideo = useMemo<VideoListItemDto | null>(() => {
@@ -240,6 +273,15 @@ export default function ImprovePage() {
             watch={form.watch}
             setValue={form.setValue}
             disabledFields={disabledFields}
+            onResyncClick={handleResyncClick}
+            isResyncing={resyncMutation.isPending}
+          />
+
+          <ResyncVideoDialog
+            open={isResyncDialogOpen}
+            isResyncing={resyncMutation.isPending}
+            onOpenChange={setIsResyncDialogOpen}
+            onConfirm={handleResyncConfirm}
           />
 
           <Actions

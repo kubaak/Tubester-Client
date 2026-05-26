@@ -1,5 +1,7 @@
 import type { UseFormRegister, UseFormSetValue, UseFormWatch } from 'react-hook-form';
+import { RotateCcw } from 'lucide-react';
 
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PlaylistSelect } from '@/feautures/playlists/components/PlaylistSelect';
 import type { VideoFormFields } from '../types/VideoFormFields';
@@ -15,13 +17,37 @@ export type DetailsFormProps = {
     tags: boolean;
     playlists: boolean;
   };
+  onResyncClick: () => void;
+  isResyncing: boolean;
 };
 
-export function DetailsForm({ register, watch, setValue, disabledFields }: DetailsFormProps) {
-  const selectedPlaylistIds = watch('playlistIds') ?? [];
+export function DetailsForm({
+  register,
+  watch,
+  setValue,
+  disabledFields,
+  onResyncClick,
+  isResyncing,
+}: DetailsFormProps) {
+  const selectedPlaylistIds = (watch('playlistIds') ?? []) as string[];
 
   return (
     <div className="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex items-center justify-between">
+        <h2 className="text-base font-medium text-slate-900">Video Details</h2>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          onClick={onResyncClick}
+          disabled={isResyncing}
+          aria-label="Resync with latest YouTube data"
+          title="Resync with latest YouTube data"
+        >
+          <RotateCcw className={isResyncing ? 'animate-spin' : ''} />
+        </Button>
+      </div>
+
       <div>
         <label htmlFor="title" className="block text-sm font-medium text-slate-900">
           Title
