@@ -1,21 +1,30 @@
 import axios from 'axios';
 import type { AxiosError } from 'axios';
 
-export function redirectToLogin() {
+let isRedirectingToLogout = false;
+
+export function redirectToLogout() {
+  if (
+    window.location.pathname === '/login' ||
+    window.location.pathname === '/logout' ||
+    window.location.pathname === '/api/auth/logout'
+  ) {
+    return;
+  }
+
   const currentUrl = window.location.pathname + window.location.search + window.location.hash;
   const returnUrl = encodeURIComponent(currentUrl);
 
-  window.location.assign(`/login?returnUrl=${returnUrl}`);
+  window.location.assign(`/api/auth/logout?returnUrl=${returnUrl}`);
 }
-
-let isRedirectingToLogin = false;
 
 axios.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
-    if (error.response?.status === 401 && !isRedirectingToLogin) {
-      isRedirectingToLogin = true;
-      redirectToLogin();
+    if (error.response?.status === 401 && !isRedirectingToLogout) {
+      isRedirectingToLogout = true;
+
+      redirectToLogout();
     }
 
     return Promise.reject(error);

@@ -367,7 +367,7 @@ export function useGetApiVideosVideoId<
 }
 
 /**
- * @summary Updates a video's editable metadata (title, description, tags).
+ * @summary Updates a video's metadata on YouTube using the current state from the database.
  */
 export const postApiVideosUpdate = (
   updateVideoMetadataRequest: UpdateVideoMetadataRequest,
@@ -417,7 +417,7 @@ export type PostApiVideosUpdateMutationBody = UpdateVideoMetadataRequest;
 export type PostApiVideosUpdateMutationError = AxiosError<ProblemDetails>;
 
 /**
- * @summary Updates a video's editable metadata (title, description, tags).
+ * @summary Updates a video's metadata on YouTube using the current state from the database.
  */
 export const usePostApiVideosUpdate = <TError = AxiosError<ProblemDetails>, TContext = unknown>(
   options?: {

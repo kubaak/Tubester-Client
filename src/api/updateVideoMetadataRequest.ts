@@ -12,12 +12,4 @@
 
 export interface UpdateVideoMetadataRequest {
   videoId?: string;
-  /** @nullable */
-  title?: string | null;
-  /** @nullable */
-  description?: string | null;
-  /** @nullable */
-  tags?: string[] | null;
-  /** @nullable */
-  playlistIds?: string[] | null;
 }
