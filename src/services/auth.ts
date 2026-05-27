@@ -10,43 +10,49 @@ export interface User {
 }
 
 export const authService = {
-  // Authentication flow using cookie-based auth
-  initiateGoogleLogin(returnUrl?: string) {
+  initiateGoogleLogin(returnUrl?: string): void {
     const authenticationSearchParameters = new URLSearchParams();
+
     if (returnUrl) {
       authenticationSearchParameters.append('returnUrl', returnUrl);
     }
 
-    const authenticationUrlPath = `/api/auth/login/google${authenticationSearchParameters.toString() ? `?${authenticationSearchParameters.toString()}` : ''}`;
-    // Same-origin redirect – no hard-coded host
+    const queryString = authenticationSearchParameters.toString();
+    const authenticationUrlPath = `/api/auth/login/google${queryString ? `?${queryString}` : ''}`;
+
     window.location.href = authenticationUrlPath;
   },
 
   async getCurrentUser(): Promise<User | null> {
     try {
-      // With cookie-based auth, the server reads the auth cookie and returns the current user
-      const response = await axios.get<{ email: string; name: string; picture?: string; isAdmin: boolean }>('/api/auth/me');
-      const authenticatedUser: User = {
+      const response = await axios.get<User>('/api/auth/me', {
+        skipAuthRedirect: true,
+      });
+
+      return {
         email: response.data.email,
         name: response.data.name,
         picture: response.data.picture,
         isAuthenticated: true,
         isAdmin: response.data.isAdmin ?? false,
       };
-      return authenticatedUser;
-    } catch {
-      // Any error (including 401) is treated as "not authenticated" on the client side
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        return null;
+      }
+
+      console.error('Failed to load current user:', error);
       return null;
     }
   },
 
-  async logout() {
-    try {
-      await postApiAuthLogout();
-    } catch {
-      // Ignore logout errors and proceed with client-side redirect
-    }
-
-    window.location.href = '/';
-  },
+  async logout(): Promise<void> {
+  try {
+    await postApiAuthLogout({
+      skipAuthRedirect: true,
+    });
+  } catch {
+    // Ignore logout errors and let the caller continue.
+  }
+}
 };

@@ -24,90 +24,93 @@ import { AuthProvider } from './contexts/AuthProvider';
 
 const queryClient = new QueryClient();
 
+function ProtectedAppRoutes() {
+  return (
+    <AuthProvider>
+      <AuthGuard>
+        <Layout>
+          <Routes>
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/copy" element={<CopyPage />} />
+            <Route path="/improve" element={<ImprovePage />} />
+            <Route path="/replies" element={<RepliesPage />} />
+            <Route path="/settings/account" element={<AccountSettingsPage />} />
+            <Route path="/settings/channel" element={<ChannelSettingsPage />} />
+            <Route path="/settings/configuration" element={<ConfigurationPage />} />
+          </Routes>
+        </Layout>
+      </AuthGuard>
+    </AuthProvider>
+  );
+}
+
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <BrowserRouter>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route
-              path="/about"
-              element={
-                <PublicLayout>
-                  <AboutPage />
-                </PublicLayout>
-              }
-            />
-            <Route
-              path="/contact"
-              element={
-                <PublicLayout>
-                  <ContactPage />
-                </PublicLayout>
-              }
-            />
-            <Route
-              path="/faq"
-              element={
-                <PublicLayout>
-                  <FaqPage />
-                </PublicLayout>
-              }
-            />
-            <Route
-              path="/help"
-              element={
-                <PublicLayout>
-                  <HelpPage />
-                </PublicLayout>
-              }
-            />
-            <Route
-              path="/privacy"
-              element={
-                <PublicLayout>
-                  <PrivacyPolicyPage />
-                </PublicLayout>
-              }
-            />
-            <Route
-              path="/terms"
-              element={
-                <PublicLayout>
-                  <TermsOfServicePage />
-                </PublicLayout>
-              }
-            />
+      <BrowserRouter>
+        <Routes>
+          {/* Public routes - no AuthProvider, no /me call */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<LoginPage />} />
 
-            {/* Protected routes */}
-            <Route
-              path="/*"
-              element={
-                <AuthGuard>
-                  <Layout>
-                    <Routes>
-                      <Route path="/dashboard" element={<DashboardPage />} />
-                      <Route path="/copy" element={<CopyPage />} />
-                      <Route path="/improve" element={<ImprovePage />} />
-                      <Route path="/replies" element={<RepliesPage />} />
-                      <Route path="/settings/account" element={<AccountSettingsPage />} />
-                      <Route path="/settings/channel" element={<ChannelSettingsPage />} />
-                      <Route path="/settings/configuration" element={<ConfigurationPage />} />
-                      <Route path="/about" element={<AboutPage />} />
-                      <Route path="/faq" element={<FaqPage />} />
-                      <Route path="/contact" element={<ContactPage />} />
-                      <Route path="/help" element={<HelpPage />} />
-                    </Routes>
-                  </Layout>
-                </AuthGuard>
-              }
-            />
-          </Routes>
-        </BrowserRouter>
-      </AuthProvider>
+          <Route
+            path="/about"
+            element={
+              <PublicLayout>
+                <AboutPage />
+              </PublicLayout>
+            }
+          />
+
+          <Route
+            path="/contact"
+            element={
+              <PublicLayout>
+                <ContactPage />
+              </PublicLayout>
+            }
+          />
+
+          <Route
+            path="/faq"
+            element={
+              <PublicLayout>
+                <FaqPage />
+              </PublicLayout>
+            }
+          />
+
+          <Route
+            path="/help"
+            element={
+              <PublicLayout>
+                <HelpPage />
+              </PublicLayout>
+            }
+          />
+
+          <Route
+            path="/privacy"
+            element={
+              <PublicLayout>
+                <PrivacyPolicyPage />
+              </PublicLayout>
+            }
+          />
+
+          <Route
+            path="/terms"
+            element={
+              <PublicLayout>
+                <TermsOfServicePage />
+              </PublicLayout>
+            }
+          />
+
+          {/* Protected routes - AuthProvider only exists here */}
+          <Route path="/*" element={<ProtectedAppRoutes />} />
+        </Routes>
+      </BrowserRouter>
     </QueryClientProvider>
   );
 }

@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
-import { useAuth } from '../contexts/useAuth';
-import { Button } from '../components/ui/button';
+import { useMemo, useState } from 'react';
+import { authService } from '@/services/auth';
+import { Button } from '@/components/ui/button';
 
 function getLoginErrorMessage(error: string | null): string | null {
   switch (error) {
@@ -12,15 +12,17 @@ function getLoginErrorMessage(error: string | null): string | null {
 }
 
 export default function LoginPage() {
-  const { login, isLoading } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
 
   const searchParams = useMemo(() => new URLSearchParams(window.location.search), []);
 
   const loginError = getLoginErrorMessage(searchParams.get('error'));
 
   const handleGoogleLogin = (): void => {
-    const returnUrl = searchParams.get('returnUrl') || '/';
-    login(returnUrl);
+    setIsLoading(true);
+
+    const returnUrl = searchParams.get('returnUrl') || '/dashboard';
+    authService.initiateGoogleLogin(returnUrl);
   };
 
   return (

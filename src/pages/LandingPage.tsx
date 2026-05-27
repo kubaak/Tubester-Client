@@ -1,33 +1,9 @@
-import { useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Video, MessageCircle, Zap, Shield, Sparkles, ArrowRight, CheckCircle } from 'lucide-react';
 
-import { useAuth } from '@/contexts/useAuth';
 import { Button } from '@/components/ui/button';
 
 export default function LandingPage() {
-  const navigate = useNavigate();
-  const { isAuthenticated, isLoading } = useAuth();
-
-  useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      navigate('/dashboard', { replace: true });
-    }
-  }, [isAuthenticated, isLoading, navigate]);
-
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-surface">
-        <div className="glass rounded-2xl border border-border/50 p-8 shadow-dramatic">
-          <div className="flex items-center justify-center gap-3">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
-            <span className="text-lg font-medium text-foreground">Loading...</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   const features = [
     {
       icon: <MessageCircle className="h-6 w-6 text-primary" />,

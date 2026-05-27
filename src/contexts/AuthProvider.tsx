@@ -37,11 +37,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = (): void => {
     resetWriteAccessCache();
     clearPendingWriteAction();
-    hasSyncedCurrentChannel.current = false;
-    hasPrefetchedChannelSettings.current = false;
-    hasPulledComments.current = false;
+
+    queryClient.clear();
     setUser(null);
-    authService.logout();
+
+    window.location.assign('/api/auth/logout');
   };
 
   const postApiChannelsSyncCurrentMutation = usePostApiChannelsSyncCurrent();
