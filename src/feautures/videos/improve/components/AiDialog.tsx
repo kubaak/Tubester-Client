@@ -208,7 +208,7 @@ export function AiDialog({ open, onOpenChange, videoId, videoTitle, videoDetails
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="max-h-[calc(100svh-2rem)] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Improve with AI</DialogTitle>
           <DialogDescription>
@@ -282,14 +282,14 @@ export function AiDialog({ open, onOpenChange, videoId, videoTitle, videoDetails
             Cancel
           </Button>
 
-          <div className="flex flex-col items-end gap-1">
+          <div className="flex flex-col items-stretch gap-1 sm:items-end">
             {creditCost.insufficientBalance && creditCost.balance !== null && creditCost.totalCost !== null && (
               <p className="text-sm text-red-600">
                 Insufficient balance. You need {creditCost.totalCost} credits, but you have {creditCost.balance}.
               </p>
             )}
 
-            <Button type="button" onClick={handleSubmit} disabled={!canSubmit} className="min-w-[220px]">
+            <Button type="button" onClick={handleSubmit} disabled={!canSubmit} className="w-full sm:min-w-[220px]">
               {submitButtonLabel}
             </Button>
           </div>
