@@ -240,7 +240,7 @@ export default function CopyPage() {
 
                 {copyMutation.isError && (
                   <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                    {(copyMutation.error as any)?.message ?? 'Failed to copy video details.'}
+                    {copyMutation.error.message ?? 'Failed to copy video details.'}
                   </div>
                 )}
 

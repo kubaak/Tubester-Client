@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useRef, type ReactNode } from 'react';
+import { useState, useEffect, useRef, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { authService, type User } from '../services/auth';
 import { usePostApiChannelsSyncCurrent } from '../api/channels/channels';
@@ -6,26 +6,7 @@ import { getGetApiChannelSettingsQueryOptions } from '@/api/channel-settings/cha
 import { getGetApiComentsPullQueryOptions } from '@/api/comments/comments';
 import { resetWriteAccessCache } from '@/auth/writeAccess';
 import { clearPendingWriteAction } from '@/auth/pendingWriteAction';
-
-interface AuthContextType {
-  user: User | null;
-  isLoading: boolean;
-  isAuthenticated: boolean;
-  login: (returnUrl?: string) => void;
-  logout: () => void;
-  refreshUser: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-
-  return context;
-};
+import { AuthContext, type AuthContextType } from './useAuth';
 
 interface AuthProviderProps {
   children: ReactNode;

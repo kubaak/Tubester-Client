@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/useAuth';
 
 interface PublicLayoutProps {
   children: ReactNode;

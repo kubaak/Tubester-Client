@@ -5,7 +5,7 @@ import { Video, MessageCircle, Home, HelpCircle, Info, Mail, Settings } from 'lu
 import { DesktopSidebar } from './DesktopSidebar';
 import { MobileHeader } from './MobileHeader';
 import { DesktopHeader } from './DesktopHeader';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/useAuth';
 import { PendingWriteActionBootstrap } from '@/auth/PendingWriteActionBootstrap';
 
 type IconType = import('react').ComponentType<{ className?: string }>;
