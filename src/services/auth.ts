@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { postApiAuthLogout } from '../api/authentication/authentication';
 
 export interface User {
   email: string;
@@ -46,13 +45,7 @@ export const authService = {
     }
   },
 
-  async logout(): Promise<void> {
-  try {
-    await postApiAuthLogout({
-      skipAuthRedirect: true,
-    });
-  } catch {
-    // Ignore logout errors and let the caller continue.
-  }
-}
+  logout(): void {
+    window.location.assign('/api/auth/logout');
+  },
 };

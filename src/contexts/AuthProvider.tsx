@@ -38,10 +38,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     resetWriteAccessCache();
     clearPendingWriteAction();
 
+    hasSyncedCurrentChannel.current = false;
+    hasPrefetchedChannelSettings.current = false;
+    hasPulledComments.current = false;
+
     queryClient.clear();
     setUser(null);
 
-    window.location.assign('/api/auth/logout');
+    authService.logout();
   };
 
   const postApiChannelsSyncCurrentMutation = usePostApiChannelsSyncCurrent();

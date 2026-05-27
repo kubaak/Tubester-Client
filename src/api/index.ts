@@ -33,6 +33,7 @@ export * from './draftDecisionDto';
 export * from './draftDecisionResultDto';
 export * from './getApiAuthLoginGoogleParams';
 export * from './getApiAuthLoginGoogleWriteParams';
+export * from './getApiAuthLogoutParams';
 export * from './getVideosRequest';
 export * from './playlistDto';
 export * from './postApiVideosResyncParams';

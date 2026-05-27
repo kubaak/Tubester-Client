@@ -9,18 +9,15 @@
 [🔐 write Login with Google](/api/auth/login/google/write?returnUrl=/swagger/index.html)
  * OpenAPI spec version: v1
  */
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
   DefinedUseQueryResult,
-  MutationFunction,
   QueryClient,
   QueryFunction,
   QueryKey,
   UndefinedInitialDataOptions,
-  UseMutationOptions,
-  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from '@tanstack/react-query';
@@ -28,7 +25,12 @@ import type {
 import * as axios from 'axios';
 import type { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
 
-import type { AuthMeResponse, GetApiAuthLoginGoogleParams, GetApiAuthLoginGoogleWriteParams } from './..';
+import type {
+  AuthMeResponse,
+  GetApiAuthLoginGoogleParams,
+  GetApiAuthLoginGoogleWriteParams,
+  GetApiAuthLogoutParams,
+} from './..';
 
 export const getApiAuthLoginGoogle = (
   params?: GetApiAuthLoginGoogleParams,
@@ -258,41 +260,111 @@ export function useGetApiAuthLoginGoogleWrite<
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
-export const postApiAuthLogout = (options?: AxiosRequestConfig): Promise<AxiosResponse<void>> => {
-  return axios.default.post(`/api/auth/logout`, undefined, options);
+/**
+ * @summary Logs out the user and redirects to a specified return URL.
+ */
+export const getApiAuthLogout = (
+  params?: GetApiAuthLogoutParams,
+  options?: AxiosRequestConfig,
+): Promise<AxiosResponse<void>> => {
+  return axios.default.get(`/api/auth/logout`, {
+    ...options,
+    params: { ...params, ...options?.params },
+  });
 };
 
-export const getPostApiAuthLogoutMutationOptions = <TError = AxiosError<unknown>, TContext = unknown>(options?: {
-  mutation?: UseMutationOptions<Awaited<ReturnType<typeof postApiAuthLogout>>, TError, void, TContext>;
-  axios?: AxiosRequestConfig;
-}): UseMutationOptions<Awaited<ReturnType<typeof postApiAuthLogout>>, TError, void, TContext> => {
-  const mutationKey = ['postApiAuthLogout'];
-  const { mutation: mutationOptions, axios: axiosOptions } = options
-    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, axios: undefined };
-
-  const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiAuthLogout>>, void> = () => {
-    return postApiAuthLogout(axiosOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
+export const getGetApiAuthLogoutQueryKey = (params?: GetApiAuthLogoutParams) => {
+  return [`/api/auth/logout`, ...(params ? [params] : [])] as const;
 };
 
-export type PostApiAuthLogoutMutationResult = NonNullable<Awaited<ReturnType<typeof postApiAuthLogout>>>;
-
-export type PostApiAuthLogoutMutationError = AxiosError<unknown>;
-
-export const usePostApiAuthLogout = <TError = AxiosError<unknown>, TContext = unknown>(
+export const getGetApiAuthLogoutQueryOptions = <
+  TData = Awaited<ReturnType<typeof getApiAuthLogout>>,
+  TError = AxiosError<unknown>,
+>(
+  params?: GetApiAuthLogoutParams,
   options?: {
-    mutation?: UseMutationOptions<Awaited<ReturnType<typeof postApiAuthLogout>>, TError, void, TContext>;
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiAuthLogout>>, TError, TData>>;
+    axios?: AxiosRequestConfig;
+  },
+) => {
+  const { query: queryOptions, axios: axiosOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetApiAuthLogoutQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiAuthLogout>>> = ({ signal }) =>
+    getApiAuthLogout(params, { signal, ...axiosOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getApiAuthLogout>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetApiAuthLogoutQueryResult = NonNullable<Awaited<ReturnType<typeof getApiAuthLogout>>>;
+export type GetApiAuthLogoutQueryError = AxiosError<unknown>;
+
+export function useGetApiAuthLogout<TData = Awaited<ReturnType<typeof getApiAuthLogout>>, TError = AxiosError<unknown>>(
+  params: undefined | GetApiAuthLogoutParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiAuthLogout>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiAuthLogout>>,
+          TError,
+          Awaited<ReturnType<typeof getApiAuthLogout>>
+        >,
+        'initialData'
+      >;
     axios?: AxiosRequestConfig;
   },
   queryClient?: QueryClient,
-): UseMutationResult<Awaited<ReturnType<typeof postApiAuthLogout>>, TError, void, TContext> => {
-  return useMutation(getPostApiAuthLogoutMutationOptions(options), queryClient);
-};
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetApiAuthLogout<TData = Awaited<ReturnType<typeof getApiAuthLogout>>, TError = AxiosError<unknown>>(
+  params?: GetApiAuthLogoutParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiAuthLogout>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiAuthLogout>>,
+          TError,
+          Awaited<ReturnType<typeof getApiAuthLogout>>
+        >,
+        'initialData'
+      >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetApiAuthLogout<TData = Awaited<ReturnType<typeof getApiAuthLogout>>, TError = AxiosError<unknown>>(
+  params?: GetApiAuthLogoutParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiAuthLogout>>, TError, TData>>;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Logs out the user and redirects to a specified return URL.
+ */
+
+export function useGetApiAuthLogout<TData = Awaited<ReturnType<typeof getApiAuthLogout>>, TError = AxiosError<unknown>>(
+  params?: GetApiAuthLogoutParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiAuthLogout>>, TError, TData>>;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetApiAuthLogoutQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
 export const getApiAuthMe = (options?: AxiosRequestConfig): Promise<AxiosResponse<AuthMeResponse>> => {
   return axios.default.get(`/api/auth/me`, options);
 };
