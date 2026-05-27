@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Video, MessageCircle, Zap, Shield, Sparkles, ArrowRight, CheckCircle } from 'lucide-react';
 
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/useAuth';
 import { Button } from '@/components/ui/button';
 
 export default function LandingPage() {

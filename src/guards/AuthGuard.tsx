@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/useAuth';
 import { Navigate, useLocation } from 'react-router-dom';
 
 interface AuthGuardProps {
