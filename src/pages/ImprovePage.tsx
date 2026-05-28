@@ -24,6 +24,7 @@ import { ImproveWithAiCard } from '@/features/videos/improve/components/ImproveW
 import type { VideoFormFields } from '@/features/videos/improve/types/VideoFormFields';
 import { isAnyAiOperationInProgress } from '@/features/videos/utils/isAnyAiOperationInProgress';
 import { ResyncVideoDialog } from '@/features/videos/improve/components/ResyncVideoDialog';
+import { getGetApiCreditsBalanceQueryKey } from '@/api/credits/credits';
 
 function parseTags(tagsText: string): string[] {
   return tagsText
@@ -178,6 +179,9 @@ export default function ImprovePage() {
 
       form.reset(form.getValues());
       await invalidateVideoDetails();
+      await queryClient.invalidateQueries({
+        queryKey: getGetApiCreditsBalanceQueryKey(),
+      });
     } catch (error) {
       setPageError(getErrorMessage(error));
     }
@@ -186,6 +190,9 @@ export default function ImprovePage() {
   const handleImproveSuccess = async () => {
     setIsImproveDialogOpen(false);
     await invalidateVideoDetails();
+    await queryClient.invalidateQueries({
+      queryKey: getGetApiCreditsBalanceQueryKey(),
+    });
   };
 
   const handleResyncClick = () => {
