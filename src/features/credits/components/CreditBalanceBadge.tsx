@@ -8,6 +8,7 @@ export function CreditBalanceBadge() {
 
   return (
     <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-background/70 px-3 py-2 text-sm shadow-sm">
+      <span className="text-muted-foreground">Credits</span>
       <Coins className="h-4 w-4 text-muted-foreground" />
       <span className="font-semibold">{isLoading ? '...' : (balance ?? 0)}</span>
     </div>

@@ -10,10 +10,13 @@ import { RepliesFilterSection } from '../features/replies/components/RepliesFilt
 import { RepliesSelectionBar } from '../features/replies/components/RepliesSelectionBar';
 import { useRepliesSearch } from '../features/replies/hooks/useRepliesSearch';
 import type { RepliesFilters } from '../features/replies/hooks/useRepliesSearch';
+import { getGetApiCreditsBalanceQueryKey } from '@/api/credits/credits';
+import { useQueryClient } from '@tanstack/react-query';
 
 const EMPTY_FILTERS: RepliesFilters = {};
 
 export default function RepliesPage() {
+  const queryClient = useQueryClient();
   const { replies, nextPageToken, isInitialLoading, isFetchingNextPage, error, fetchInitial, fetchNextPage } =
     useRepliesSearch();
 
@@ -150,6 +153,9 @@ export default function RepliesPage() {
 
       try {
         await approveMutation.mutateAsync({ data: request });
+        await queryClient.invalidateQueries({
+          queryKey: getGetApiCreditsBalanceQueryKey(),
+        });
 
         setSelectedIds((prev) => {
           const next = new Set(prev);
@@ -229,6 +235,9 @@ export default function RepliesPage() {
 
     try {
       await approveMutation.mutateAsync({ data: request });
+      await queryClient.invalidateQueries({
+        queryKey: getGetApiCreditsBalanceQueryKey(),
+      });
       setSelectedIds(new Set());
       await fetchInitial(appliedFilters);
     } catch {

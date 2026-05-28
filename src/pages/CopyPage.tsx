@@ -73,7 +73,7 @@ export default function CopyPage() {
     };
 
     await copyMutation.mutateAsync({ data: request });
-    navigate(`/review?videoId=${encodeURIComponent(values.targetVideoId)}`);
+    navigate(`/improve?videoId=${encodeURIComponent(values.targetVideoId)}`);
   });
 
   const defaultVisibilities = useMemo(() => [VideoVisibility.Unlisted], []);

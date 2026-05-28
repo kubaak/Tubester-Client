@@ -3,6 +3,7 @@ import { Smile, Check, X } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { Textarea } from '../../../components/ui/Textarea';
 import { EmojiPicker } from '../../../components/ui/EmojiPicker';
+import { useReplyApproveCreditCost } from '../hooks/useReplyApproveCreditCost';
 
 interface ReplyEditorProps {
   defaultValue: string;
@@ -17,6 +18,8 @@ export function ReplyEditor({ defaultValue, commentId, onApprove, onIgnore, isAc
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const emojiButtonRef = useRef<HTMLButtonElement>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
+
+  const creditCost = useReplyApproveCreditCost();
 
   useEffect(() => {
     setReplyText(defaultValue);
@@ -56,6 +59,22 @@ export function ReplyEditor({ defaultValue, commentId, onApprove, onIgnore, isAc
   const handleIgnore = () => {
     onIgnore(commentId);
   };
+
+  const approveButtonLabel = (() => {
+    if (creditCost.isLoading) {
+      return 'Loading…';
+    }
+
+    if (creditCost.isError || !creditCost.isReady || creditCost.totalCost === null) {
+      return 'Approve';
+    }
+
+    if (creditCost.insufficientBalance) {
+      return 'Approve';
+    }
+
+    return `Approve · ${creditCost.totalCost} credits`;
+  })();
 
   return (
     <div className="space-y-3">
@@ -98,12 +117,23 @@ export function ReplyEditor({ defaultValue, commentId, onApprove, onIgnore, isAc
             Ignore
           </Button>
 
-          <Button type="button" size="sm" onClick={handleApprove} disabled={isActionPending || !replyText.trim()}>
+          <Button
+            type="button"
+            size="sm"
+            onClick={handleApprove}
+            disabled={isActionPending || !replyText.trim() || creditCost.insufficientBalance}
+          >
             <Check className="h-3.5 w-3.5" />
-            Approve
+            {approveButtonLabel}
           </Button>
         </div>
       </div>
+
+      {creditCost.insufficientBalance && creditCost.balance !== null && creditCost.totalCost !== null && (
+        <p className="text-sm text-red-600">
+          Insufficient balance. You need {creditCost.totalCost} credits, but you have {creditCost.balance}.
+        </p>
+      )}
     </div>
   );
 }
