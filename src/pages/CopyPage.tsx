@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { usePostApiVideosCopyTemplate } from '@/api/videos/videos';
 import { VideoVisibility, type CopyVideoTemplateRequest } from '@/api';
 import { useRadixConfirmDialog } from '@/components/dialogs/useRadixConfirmDialog';
-import { VideoSelect } from '@/feautures/videos/components/VideoSelect';
+import { VideoSelect } from '@/features/videos/components/VideoSelect';
 import { useMemo } from 'react';
 
 type FormValues = {

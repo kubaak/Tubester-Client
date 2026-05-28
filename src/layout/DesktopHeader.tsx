@@ -1,3 +1,4 @@
+import { CreditBalanceBadge } from '@/features/credits/components/CreditBalanceBadge';
 import { UserMenu } from './UserMenu';
 
 type DesktopHeaderProps = {
@@ -28,7 +29,9 @@ export function DesktopHeader({
           </div>
         </div>
 
-        <div className="flex items-center">
+        <div className="flex items-center gap-3">
+          <CreditBalanceBadge />
+
           <UserMenu
             user={user}
             isOpen={isUserMenuOpen}

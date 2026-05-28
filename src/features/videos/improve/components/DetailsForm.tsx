@@ -3,7 +3,7 @@ import { RotateCcw } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { PlaylistSelect } from '@/feautures/playlists/components/PlaylistSelect';
+import { PlaylistSelect } from '@/features/playlists/components/PlaylistSelect';
 import type { VideoFormFields } from '../types/VideoFormFields';
 import { Textarea } from '@/components/ui/Textarea';
 

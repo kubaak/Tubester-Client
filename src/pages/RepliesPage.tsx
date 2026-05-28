@@ -5,11 +5,11 @@ import type { BatchDecisionRequest, DraftDecisionDto } from '../api';
 import { useRadixConfirmDialog } from '../components/dialogs/useRadixConfirmDialog';
 
 import { Button } from '../components/ui/button';
-import { RepliesContent } from '../feautures/replies/components/RepliesContent';
-import { RepliesFilterSection } from '../feautures/replies/components/RepliesFilterSection';
-import { RepliesSelectionBar } from '../feautures/replies/components/RepliesSelectionBar';
-import { useRepliesSearch } from '../feautures/replies/hooks/useRepliesSearch';
-import type { RepliesFilters } from '../feautures/replies/hooks/useRepliesSearch';
+import { RepliesContent } from '../features/replies/components/RepliesContent';
+import { RepliesFilterSection } from '../features/replies/components/RepliesFilterSection';
+import { RepliesSelectionBar } from '../features/replies/components/RepliesSelectionBar';
+import { useRepliesSearch } from '../features/replies/hooks/useRepliesSearch';
+import type { RepliesFilters } from '../features/replies/hooks/useRepliesSearch';
 
 const EMPTY_FILTERS: RepliesFilters = {};
 
