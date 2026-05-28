@@ -10,12 +10,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { AiOptionCard } from '@/feautures/videos/improve/components/AiOptionCard';
-import { useAiCreditCost, type AiOperationSelection } from '@/feautures/videos/hooks/useAiCreditCost';
+import { AiOptionCard } from '@/features/videos/improve/components/AiOptionCard';
+import { useAiCreditCost, type AiOperationSelection } from '@/features/videos/hooks/useAiCreditCost';
 import {
   useAiTemplateOperationMutation,
   type AiTemplateOperationMutationInput,
-} from '@/feautures/videos/hooks/useAiTemplateOperationMutation';
+} from '@/features/videos/hooks/useAiTemplateOperationMutation';
 import type { AiVideoTemplateRequest, VideoDetailsDto } from '@/api';
 import { Textarea } from '@/components/ui/Textarea';
 

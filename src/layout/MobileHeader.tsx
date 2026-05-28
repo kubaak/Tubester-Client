@@ -1,5 +1,6 @@
 import { Menu, X } from 'lucide-react';
 
+import { CreditBalanceBadge } from '@/features/credits/components/CreditBalanceBadge';
 import { UserMenu } from './UserMenu';
 import { MobileNavigationMenu } from './MobileNavigationMenu';
 
@@ -56,12 +57,15 @@ export function MobileHeader({
 
         <div className="flex min-w-0 items-center justify-center gap-3">
           <img src="/tubester_logo.png" alt="Tubester logo" className="h-8 w-auto shrink-0 object-contain" />
+
           <div className="min-w-0">
             <div className="truncate text-sm font-semibold text-foreground">{currentPageTitle}</div>
           </div>
         </div>
 
-        <div className="flex justify-end">
+        <div className="flex items-center justify-end gap-2">
+          <CreditBalanceBadge />
+
           <UserMenu
             user={user}
             isOpen={isUserMenuOpen}

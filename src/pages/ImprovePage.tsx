@@ -11,19 +11,19 @@ import {
   usePostApiVideosResync,
 } from '@/api/videos/videos';
 
-import { VideoSelect } from '@/feautures/videos/components/VideoSelect';
+import { VideoSelect } from '@/features/videos/components/VideoSelect';
 
-import { useVideoSnapshotSync } from '@/feautures/videos/improve/hooks/useVideoSnapshotSync';
-import { useVideoIdParam } from '@/feautures/videos/hooks/useVideoIdParam';
+import { useVideoSnapshotSync } from '@/features/videos/improve/hooks/useVideoSnapshotSync';
+import { useVideoIdParam } from '@/features/videos/hooks/useVideoIdParam';
 
-import { AiDialog } from '@/feautures/videos/improve/components/AiDialog';
-import { DetailsForm } from '@/feautures/videos/improve/components/DetailsForm';
-import { Actions } from '@/feautures/videos/improve/components/Actions';
-import { ProgressBanner } from '@/feautures/videos/improve/components/ProgressBanner';
-import { ImproveWithAiCard } from '@/feautures/videos/improve/components/ImproveWithAiCard';
-import type { VideoFormFields } from '@/feautures/videos/improve/types/VideoFormFields';
-import { isAnyAiOperationInProgress } from '@/feautures/videos/utils/isAnyAiOperationInProgress';
-import { ResyncVideoDialog } from '@/feautures/videos/improve/components/ResyncVideoDialog';
+import { AiDialog } from '@/features/videos/improve/components/AiDialog';
+import { DetailsForm } from '@/features/videos/improve/components/DetailsForm';
+import { Actions } from '@/features/videos/improve/components/Actions';
+import { ProgressBanner } from '@/features/videos/improve/components/ProgressBanner';
+import { ImproveWithAiCard } from '@/features/videos/improve/components/ImproveWithAiCard';
+import type { VideoFormFields } from '@/features/videos/improve/types/VideoFormFields';
+import { isAnyAiOperationInProgress } from '@/features/videos/utils/isAnyAiOperationInProgress';
+import { ResyncVideoDialog } from '@/features/videos/improve/components/ResyncVideoDialog';
 
 function parseTags(tagsText: string): string[] {
   return tagsText
