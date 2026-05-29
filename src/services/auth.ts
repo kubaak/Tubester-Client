@@ -6,6 +6,10 @@ export interface User {
   picture?: string;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  hasYouTubeReadAccess: boolean;
+  hasChannel: boolean;
+  channelId?: string | null;
+  channelTitle?: string | null;
 }
 
 export const authService = {
@@ -34,6 +38,10 @@ export const authService = {
         picture: response.data.picture,
         isAuthenticated: true,
         isAdmin: response.data.isAdmin ?? false,
+        hasYouTubeReadAccess: response.data.hasYouTubeReadAccess ?? false,
+        hasChannel: response.data.hasYouTubeReadAccess === true && !!response.data.channelId,
+        channelId: response.data.channelId,
+        channelTitle: response.data.channelTitle,
       };
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 401) {

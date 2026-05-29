@@ -7,6 +7,7 @@ import { getGetApiComentsPullQueryOptions } from '@/api/comments/comments';
 import { resetWriteAccessCache } from '@/auth/writeAccess';
 import { clearPendingWriteAction } from '@/auth/pendingWriteAction';
 import { AuthContext, type AuthContextType } from './useAuth';
+import { hasFullYouTubeAccess } from './hasFullYouTubeAccess';
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -68,7 +69,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    if (user === null || !user.isAuthenticated || hasSyncedCurrentChannel.current) {
+    // Only sync channel for users with full YouTube access
+    if (user === null || !hasFullYouTubeAccess(user) || hasSyncedCurrentChannel.current) {
       return;
     }
 
@@ -77,7 +79,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [user, postApiChannelsSyncCurrentMutation]);
 
   useEffect(() => {
-    if (user === null || !user.isAuthenticated || hasPrefetchedChannelSettings.current) {
+    // Only prefetch channel settings/comments for users with full YouTube access
+    if (user === null || !hasFullYouTubeAccess(user) || hasPrefetchedChannelSettings.current) {
       return;
     }
 
@@ -85,10 +88,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const prefetchChannelSettings = async (): Promise<void> => {
       try {
-        const response = await queryClient.fetchQuery(getGetApiChannelSettingsQueryOptions());
+        const response = await queryClient.fetchQuery(
+          getGetApiChannelSettingsQueryOptions({ axios: { skipAuthRedirect: true } }),
+        );
 
         if (response?.data?.isCommentAssistantEnabled && !hasPulledComments.current) {
-          await queryClient.prefetchQuery(getGetApiComentsPullQueryOptions());
+          await queryClient.prefetchQuery(getGetApiComentsPullQueryOptions({ axios: { skipAuthRedirect: true } }));
           hasPulledComments.current = true;
         }
       } catch {

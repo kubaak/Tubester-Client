@@ -25,4 +25,5 @@ export interface AuthMeResponse {
   picture?: string | null;
   hasWriteAccess?: boolean;
   isAdmin?: boolean;
+  hasYouTubeReadAccess?: boolean;
 }

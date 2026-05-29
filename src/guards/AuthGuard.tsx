@@ -1,13 +1,14 @@
 import { type ReactNode } from 'react';
 import { useAuth } from '../contexts/useAuth';
 import { Navigate, useLocation } from 'react-router-dom';
+import { YouTubeConnectionRequiredCard } from '@/components/YouTubeConnectionRequiredCard';
 
 interface AuthGuardProps {
   children: ReactNode;
 }
 
 export const AuthGuard = ({ children }: AuthGuardProps) => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
 
   // Show loading spinner while checking authentication
@@ -24,12 +25,22 @@ export const AuthGuard = ({ children }: AuthGuardProps) => {
     );
   }
 
-  // Redirect to login if not authenticated
-  if (!isAuthenticated) {
+  // Redirect to login if not authenticated at all
+  if (!isAuthenticated || user === null) {
     const returnUrl = `${location.pathname}${location.search}`;
     return <Navigate to={`/login?returnUrl=${encodeURIComponent(returnUrl)}`} replace />;
   }
 
-  // Render protected content
+  // Authenticated but YouTube permission missing - show reconnect CTA
+  if (!user.hasYouTubeReadAccess) {
+    return <YouTubeConnectionRequiredCard variant="missing-permission" />;
+  }
+
+  // Authenticated but no channel found - show no channel message
+  if (!user.hasChannel) {
+    return <YouTubeConnectionRequiredCard variant="no-channel" />;
+  }
+
+  // Render protected content when user has full YouTube access with channel
   return <>{children}</>;
 };
