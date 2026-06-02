@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { authService, type User } from '../services/auth';
-import { usePostApiChannelsSyncCurrent } from '../api/channels/channels';
+import { usePostApiChannelsPull, usePostApiChannelsSyncCurrent } from '../api/channels/channels';
 import { getGetApiChannelSettingsQueryOptions } from '@/api/channel-settings/channel-settings';
-import { getGetApiComentsPullQueryOptions } from '@/api/comments/comments';
 import { resetWriteAccessCache } from '@/auth/writeAccess';
 import { clearPendingWriteAction } from '@/auth/pendingWriteAction';
 import { AuthContext, type AuthContextType } from './useAuth';
@@ -49,6 +48,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     authService.logout();
   };
 
+  const postApiChannelsPullMutation = usePostApiChannelsPull();
   const postApiChannelsSyncCurrentMutation = usePostApiChannelsSyncCurrent();
 
   useEffect(() => {
@@ -69,40 +69,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    // Only sync channel for users with full YouTube access
+    // Only sync for users with full YouTube access
     if (user === null || !hasFullYouTubeAccess(user) || hasSyncedCurrentChannel.current) {
       return;
     }
 
     hasSyncedCurrentChannel.current = true;
-    postApiChannelsSyncCurrentMutation.mutate();
-  }, [user, postApiChannelsSyncCurrentMutation]);
 
-  useEffect(() => {
-    // Only prefetch channel settings/comments for users with full YouTube access
-    if (user === null || !hasFullYouTubeAccess(user) || hasPrefetchedChannelSettings.current) {
-      return;
-    }
-
-    hasPrefetchedChannelSettings.current = true;
-
-    const prefetchChannelSettings = async (): Promise<void> => {
+    const syncChannelsAndPrefetch = async (): Promise<void> => {
       try {
-        const response = await queryClient.fetchQuery(
-          getGetApiChannelSettingsQueryOptions({ axios: { skipAuthRedirect: true } }),
-        );
+        // Step 1: Pull channels first
+        await postApiChannelsPullMutation.mutateAsync();
 
-        if (response?.data?.isCommentAssistantEnabled && !hasPulledComments.current) {
-          await queryClient.prefetchQuery(getGetApiComentsPullQueryOptions({ axios: { skipAuthRedirect: true } }));
-          hasPulledComments.current = true;
+        // Step 2: After successful channels pull, sync current channel
+        postApiChannelsSyncCurrentMutation.mutate();
+
+        // Step 3: Prefetch channel settings
+        if (!hasPrefetchedChannelSettings.current) {
+          hasPrefetchedChannelSettings.current = true;
+          await queryClient.fetchQuery(getGetApiChannelSettingsQueryOptions({ axios: { skipAuthRedirect: true } }));
         }
       } catch {
-        // Silently fail - channel settings may not exist yet
+        // Silently fail - channels pull or prefetch may fail
       }
     };
 
-    void prefetchChannelSettings();
-  }, [user, queryClient]);
+    void syncChannelsAndPrefetch();
+  }, [user, queryClient, postApiChannelsPullMutation, postApiChannelsSyncCurrentMutation]);
 
   const isAuthenticated = user !== null && user.isAuthenticated;
 
