@@ -15,8 +15,52 @@ import type { MutationFunction, QueryClient, UseMutationOptions, UseMutationResu
 import * as axios from 'axios';
 import type { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
 
-import type { ChannelSyncResult, ProblemDetails } from './..';
+import type { ChannelDto, ChannelSyncResult, ProblemDetails } from './..';
 
+/**
+ * @summary Pulls channel details from YouTube and stores or updates the local channel snapshot.
+ */
+export const postApiChannelsPull = (options?: AxiosRequestConfig): Promise<AxiosResponse<ChannelDto>> => {
+  return axios.default.post(`/api/channels/pull`, undefined, options);
+};
+
+export const getPostApiChannelsPullMutationOptions = <
+  TError = AxiosError<ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<Awaited<ReturnType<typeof postApiChannelsPull>>, TError, void, TContext>;
+  axios?: AxiosRequestConfig;
+}): UseMutationOptions<Awaited<ReturnType<typeof postApiChannelsPull>>, TError, void, TContext> => {
+  const mutationKey = ['postApiChannelsPull'];
+  const { mutation: mutationOptions, axios: axiosOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, axios: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiChannelsPull>>, void> = () => {
+    return postApiChannelsPull(axiosOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type PostApiChannelsPullMutationResult = NonNullable<Awaited<ReturnType<typeof postApiChannelsPull>>>;
+
+export type PostApiChannelsPullMutationError = AxiosError<ProblemDetails>;
+
+/**
+ * @summary Pulls channel details from YouTube and stores or updates the local channel snapshot.
+ */
+export const usePostApiChannelsPull = <TError = AxiosError<ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<Awaited<ReturnType<typeof postApiChannelsPull>>, TError, void, TContext>;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof postApiChannelsPull>>, TError, void, TContext> => {
+  return useMutation(getPostApiChannelsPullMutationOptions(options), queryClient);
+};
 /**
  * @summary Immediately synchronizes the current channel for the currently signed-in user.
 The current channel is resolved from the channel context (yt_channel_id claim).

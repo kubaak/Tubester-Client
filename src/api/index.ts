@@ -20,6 +20,7 @@ export * from './batchDecisionRequest';
 export * from './batchDecisionResultDto';
 export * from './batchIgnoreResult';
 export * from './categoryDto';
+export * from './channelDto';
 export * from './channelSettingsDto';
 export * from './channelSyncResult';
 export * from './configurationValueType';
