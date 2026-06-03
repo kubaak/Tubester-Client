@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Globe, Loader2, CheckCircle, AlertCircle, CreditCard } from 'lucide-react';
+import { Globe, Loader2, CheckCircle, AlertCircle, CreditCard, Trash2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -8,8 +8,11 @@ import {
   usePutApiSettingsAccount,
   getGetApiSettingsAccountQueryKey,
 } from '@/api/account-settings/account-settings';
+import { useDeleteApiUsersMe } from '@/api/users/users';
 import type { UpdateAccountSettingsRequest } from '@/api';
 import { Button } from '@/components/ui/button';
+import { useRadixConfirmDialog } from '@/components/dialogs/useRadixConfirmDialog';
+import { redirectToLogout } from '@/auth/redirectToLogout';
 
 type AccountSettingsFormValues = {
   preferredTheme: string;
@@ -70,12 +73,40 @@ function toFormValues(settings: Partial<UpdateAccountSettingsRequest> | undefine
 export default function AccountSettingsPage() {
   const { data: settingsResponse, isLoading, isError } = useGetApiSettingsAccount();
   const updateMutation = usePutApiSettingsAccount();
+  const deleteAccountMutation = useDeleteApiUsersMe();
   const queryClient = useQueryClient();
+
+  const { confirm, confirmDialog } = useRadixConfirmDialog();
 
   const settings = settingsResponse?.data;
 
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const saveStatusTimeoutRef = useRef<number | null>(null);
+
+  const handleDeleteAccount = async () => {
+    const confirmed = await confirm(
+      'Are you sure you want to delete your account? This action cannot be undone.',
+      <div className="space-y-2 text-sm text-muted-foreground">
+        <p>This will permanently delete:</p>
+        <ul className="list-inside list-disc space-y-1">
+          <li>All your account data</li>
+          <li>All videos and their metadata</li>
+          <li>All generated replies and templates</li>
+          <li>Your subscription and credits</li>
+        </ul>
+        <p className="font-medium text-foreground">You will be logged out and redirected to the login page.</p>
+      </div>,
+    );
+
+    if (confirmed) {
+      try {
+        await deleteAccountMutation.mutateAsync();
+        redirectToLogout();
+      } catch (error) {
+        console.error('Failed to delete account:', error);
+      }
+    }
+  };
 
   const {
     register,
@@ -234,36 +265,36 @@ export default function AccountSettingsPage() {
               </div>
             </div>
           </div>
-        </div>
 
-        <div className="glass mt-8 rounded-3xl border border-border/50 p-8 shadow-moderate">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex min-h-6 items-center gap-3">
-              {saveStatus === 'success' && (
-                <div className="flex animate-fade-in items-center gap-2 text-success">
-                  <CheckCircle className="h-5 w-5" />
-                  <span className="text-sm font-medium">Settings saved successfully.</span>
-                </div>
-              )}
+          <div className="glass mt-8 rounded-3xl border border-border/50 p-8 shadow-moderate">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div className="flex min-h-6 items-center gap-3">
+                {saveStatus === 'success' && (
+                  <div className="flex animate-fade-in items-center gap-2 text-success">
+                    <CheckCircle className="h-5 w-5" />
+                    <span className="text-sm font-medium">Settings saved successfully.</span>
+                  </div>
+                )}
 
-              {saveStatus === 'error' && (
-                <div className="flex animate-fade-in items-center gap-2 text-destructive">
-                  <AlertCircle className="h-5 w-5" />
-                  <span className="text-sm font-medium">Failed to save settings. Please try again.</span>
-                </div>
-              )}
+                {saveStatus === 'error' && (
+                  <div className="flex animate-fade-in items-center gap-2 text-destructive">
+                    <AlertCircle className="h-5 w-5" />
+                    <span className="text-sm font-medium">Failed to save settings. Please try again.</span>
+                  </div>
+                )}
+              </div>
+
+              <Button type="submit" disabled={updateMutation.isPending || !isDirty}>
+                {updateMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Saving…
+                  </>
+                ) : (
+                  'Save Changes'
+                )}
+              </Button>
             </div>
-
-            <Button type="submit" disabled={updateMutation.isPending || !isDirty}>
-              {updateMutation.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Saving…
-                </>
-              ) : (
-                'Save Changes'
-              )}
-            </Button>
           </div>
         </div>
       </form>
@@ -318,6 +349,41 @@ export default function AccountSettingsPage() {
           </div>
         </div>
       )}
+
+      <div className="glass animate-slide-up rounded-3xl border border-destructive/30 p-8 shadow-moderate">
+        <div className="mb-6 flex items-center gap-4">
+          <div className="rounded-2xl bg-destructive/10 p-3 shadow-moderate">
+            <Trash2 className="h-6 w-6 text-destructive" />
+          </div>
+          <h3 className="text-2xl font-bold text-foreground">Danger Zone</h3>
+        </div>
+
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="flex-1 space-y-1">
+            <span className="text-base font-semibold text-foreground">Delete Account</span>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              Permanently delete your account and all associated data. This action cannot be undone.
+            </p>
+          </div>
+          <Button
+            variant="destructive"
+            onClick={handleDeleteAccount}
+            disabled={deleteAccountMutation.isPending}
+            className="md:ml-6"
+          >
+            {deleteAccountMutation.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Deleting…
+              </>
+            ) : (
+              'Delete Account'
+            )}
+          </Button>
+        </div>
+      </div>
+
+      {confirmDialog}
     </div>
   );
 }
