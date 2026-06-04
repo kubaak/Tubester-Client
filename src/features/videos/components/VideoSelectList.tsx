@@ -1,6 +1,5 @@
-import { Check } from 'lucide-react';
 import type { VideoListItemDto } from '@/api';
-import { cn } from '@/lib/cn';
+import { VideoItem } from './VideoItem';
 
 type Props = {
   items: readonly VideoListItemDto[];
@@ -23,41 +22,11 @@ export function VideoSelectList({ items, isPending, value, onChange, nextPageTok
           <div className="p-3 text-sm text-gray-500">{isPending ? 'Loading…' : 'No videos match your filter.'}</div>
         ) : (
           <ul className="space-y-1">
-            {items.map((v) => {
-              const videoId = v.videoId;
-              const active = videoId === value;
-
-              return (
-                <li key={videoId}>
-                  <button
-                    type="button"
-                    className={cn(
-                      'w-full flex items-center gap-3 rounded-lg px-2 py-2 text-sm hover:bg-gray-100 text-left',
-                      active && 'bg-gray-100',
-                    )}
-                    onClick={() => onChange(v)}
-                  >
-                    {v.thumbnailUrl && (
-                      <img
-                        src={v.thumbnailUrl}
-                        alt=""
-                        className="w-12 h-7 rounded object-cover border"
-                        loading="lazy"
-                      />
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate" title={v.title ?? videoId}>
-                        {v.title ?? videoId}
-                      </div>
-                      <div className="flex items-center gap-3 text-xs text-gray-500">
-                        {v.publishedAt && <div>{new Date(v.publishedAt).toLocaleDateString()}</div>}
-                      </div>
-                    </div>
-                    {active && <Check className="w-4 h-4 text-primary" />}
-                  </button>
-                </li>
-              );
-            })}
+            {items.map((video) => (
+              <li key={video.videoId}>
+                <VideoItem video={video} selected={video.videoId === value} onClick={onChange} />
+              </li>
+            ))}
           </ul>
         )}
       </div>

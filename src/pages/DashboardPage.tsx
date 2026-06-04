@@ -1,4 +1,4 @@
-import React from 'react';
+import { PendingImprovementsVideosBlock } from '../features/videos/components/PendingImprovementsVideosBlock';
 
 export default function DashboardPage() {
   return (
@@ -11,6 +11,8 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      <PendingImprovementsVideosBlock />
     </div>
   );
 }
