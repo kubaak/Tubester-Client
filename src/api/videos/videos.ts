@@ -37,6 +37,7 @@ import type {
   SaveVideoDraftRequest,
   UpdateVideoMetadataRequest,
   VideoDetailsDto,
+  VideoListItemDto,
   VideoListItemDtoPagedResult,
 } from './..';
 
@@ -585,3 +586,106 @@ export const usePostApiVideosResync = <TError = AxiosError<ProblemDetails>, TCon
 > => {
   return useMutation(getPostApiVideosResyncMutationOptions(options), queryClient);
 };
+/**
+ * @summary Gets all videos with unsynced local changes.
+ */
+export const getApiVideosDirty = (options?: AxiosRequestConfig): Promise<AxiosResponse<VideoListItemDto[]>> => {
+  return axios.default.get(`/api/videos/dirty`, options);
+};
+
+export const getGetApiVideosDirtyQueryKey = () => {
+  return [`/api/videos/dirty`] as const;
+};
+
+export const getGetApiVideosDirtyQueryOptions = <
+  TData = Awaited<ReturnType<typeof getApiVideosDirty>>,
+  TError = AxiosError<unknown>,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiVideosDirty>>, TError, TData>>;
+  axios?: AxiosRequestConfig;
+}) => {
+  const { query: queryOptions, axios: axiosOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetApiVideosDirtyQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiVideosDirty>>> = ({ signal }) =>
+    getApiVideosDirty({ signal, ...axiosOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getApiVideosDirty>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetApiVideosDirtyQueryResult = NonNullable<Awaited<ReturnType<typeof getApiVideosDirty>>>;
+export type GetApiVideosDirtyQueryError = AxiosError<unknown>;
+
+export function useGetApiVideosDirty<
+  TData = Awaited<ReturnType<typeof getApiVideosDirty>>,
+  TError = AxiosError<unknown>,
+>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiVideosDirty>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiVideosDirty>>,
+          TError,
+          Awaited<ReturnType<typeof getApiVideosDirty>>
+        >,
+        'initialData'
+      >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetApiVideosDirty<
+  TData = Awaited<ReturnType<typeof getApiVideosDirty>>,
+  TError = AxiosError<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiVideosDirty>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiVideosDirty>>,
+          TError,
+          Awaited<ReturnType<typeof getApiVideosDirty>>
+        >,
+        'initialData'
+      >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetApiVideosDirty<
+  TData = Awaited<ReturnType<typeof getApiVideosDirty>>,
+  TError = AxiosError<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiVideosDirty>>, TError, TData>>;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Gets all videos with unsynced local changes.
+ */
+
+export function useGetApiVideosDirty<
+  TData = Awaited<ReturnType<typeof getApiVideosDirty>>,
+  TError = AxiosError<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiVideosDirty>>, TError, TData>>;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetApiVideosDirtyQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
