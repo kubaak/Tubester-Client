@@ -1,7 +1,7 @@
-import { Shield, Eye, Lock, Server, Users, FileText } from 'lucide-react';
+import { Eye, FileText, Lock, Server, Shield, Users } from 'lucide-react';
 
 export default function PrivacyPolicyPage() {
-  const lastUpdated = 'April 3, 2026';
+  const lastUpdated = 'June 9, 2026';
 
   return (
     <div className="space-y-8">
@@ -12,15 +12,18 @@ export default function PrivacyPolicyPage() {
 
         <div>
           <h1 className="text-3xl font-bold text-foreground mb-2">Privacy Policy</h1>
+
           <p className="text-muted-foreground max-w-2xl mx-auto">
             This policy explains how Tubester collects, uses, stores, shares, and protects your data.
           </p>
+
           <p className="text-sm text-muted-foreground mt-2">Last updated: {lastUpdated}</p>
         </div>
       </div>
 
       <section className="glass rounded-xl p-8 border border-border/50">
         <h2 className="text-xl font-bold mb-4">Who We Are</h2>
+
         <p className="text-muted-foreground">
           Tubester is operated by <strong>99 Soft LLC</strong>, a company registered in Wyoming, USA. 99 Soft LLC acts
           as the data controller for personal data processed through Tubester.
@@ -38,6 +41,7 @@ export default function PrivacyPolicyPage() {
 
           <div>
             <h3 className="font-semibold text-foreground mb-2">Google Account and YouTube Data</h3>
+
             <ul className="list-disc ml-6 space-y-1">
               <li>Name and email address from your Google account</li>
               <li>YouTube channel identifier and basic channel metadata</li>
@@ -55,6 +59,7 @@ export default function PrivacyPolicyPage() {
 
           <div>
             <h3 className="font-semibold text-foreground mb-2">User Content</h3>
+
             <ul className="list-disc ml-6 space-y-1">
               <li>AI prompts, instructions, drafts, edits, and generated suggestions</li>
               <li>Selections, approvals, rejections, and other actions you take inside the app</li>
@@ -63,6 +68,7 @@ export default function PrivacyPolicyPage() {
 
           <div>
             <h3 className="font-semibold text-foreground mb-2">Technical and Security Data</h3>
+
             <ul className="list-disc ml-6 space-y-1">
               <li>Essential authentication and session data, including secure cookies where applicable</li>
               <li>Basic logs, error reports, IP address, browser type, and device information</li>
@@ -94,10 +100,17 @@ export default function PrivacyPolicyPage() {
           <li>Comply with legal obligations</li>
         </ul>
 
-        <p className="text-muted-foreground mt-4">
-          We use Google user data only to provide and improve the user-facing features of Tubester that you choose to
-          use.
-        </p>
+        <div className="space-y-3 text-muted-foreground mt-4">
+          <p>
+            We use Google user data only to provide and improve the user-facing features of Tubester that you choose to
+            use.
+          </p>
+
+          <p>
+            AI-assisted features may send the relevant content needed for generation to Google Gemini, including
+            prompts, instructions, video metadata, comment text, drafts, and generated outputs.
+          </p>
+        </div>
       </section>
 
       <section className="glass rounded-xl p-8 border border-border/50">
@@ -126,6 +139,7 @@ export default function PrivacyPolicyPage() {
             </a>
             .
           </p>
+
           <p>
             Tubester's use of information received from Google APIs adheres to the{' '}
             <a
@@ -159,15 +173,18 @@ export default function PrivacyPolicyPage() {
             password is never shared with or stored by Tubester. OAuth tokens are embedded inside your encrypted session
             cookie and are not persisted separately on the server.
           </p>
+
           <p>
             Tubester does not request offline access to your Google account. Interactive features such as browsing
             videos, editing metadata, and publishing replies use the access token from your active session.
           </p>
+
           <p>
             Some features, such as scanning for unanswered comments, run as background processes using a YouTube API key
-            (not your personal OAuth token). These processes access only publicly available comment data to prepare
+            instead of your personal OAuth token. These processes access only publicly available comment data to prepare
             draft replies for your review.
           </p>
+
           <p>
             You can stop Tubester's access at any time by signing out of Tubester and revoking Tubester in your{' '}
             <a
@@ -192,15 +209,25 @@ export default function PrivacyPolicyPage() {
 
         <div className="space-y-3 text-muted-foreground">
           <p>We do not sell your personal data.</p>
+
           <p>
-            AI features in Tubester are powered by a self-hosted language model running on our own infrastructure. Your
-            data is not sent to third-party AI providers for these features.
+            We may share data with AI processing providers only as necessary to provide Tubester's user-facing AI
+            features. This may include Google Gemini for the hosted Tubester service, or a self-hosted model such as
+            Qwen in configurations where self-hosted AI processing is enabled.
           </p>
+
+          <p>
+            We use Google Gemini only to provide Tubester's user-facing AI features, such as generating video metadata
+            suggestions and comment reply drafts. We do not use your Google / YouTube data for advertising, and we do
+            not transfer Google user data to data brokers or information resellers.
+          </p>
+
           <p>
             We may share data with service providers that help us operate Tubester, such as hosting, infrastructure,
-            logging, analytics, and customer support providers, and only to the extent reasonably necessary to provide
-            the service.
+            logging, analytics, AI processing, and customer support providers, and only to the extent reasonably
+            necessary to provide the service.
           </p>
+
           <p>
             We may also disclose information if required by law, to respond to lawful requests, to protect our rights,
             or to prevent fraud, abuse, or security incidents.
@@ -228,11 +255,13 @@ export default function PrivacyPolicyPage() {
 
       <section className="glass rounded-xl p-8 border border-border/50">
         <h2 className="text-xl font-bold mb-4">Data Retention</h2>
+
         <div className="space-y-3 text-muted-foreground">
           <p>
             We retain personal data for as long as reasonably necessary to provide the service, maintain your account,
             comply with legal obligations, resolve disputes, and enforce our agreements.
           </p>
+
           <p>
             If you request deletion or disconnect your Google / YouTube account, we will delete or de-identify data that
             is no longer needed for the purposes above within a reasonable period, unless retention is required by law
@@ -243,6 +272,7 @@ export default function PrivacyPolicyPage() {
 
       <section className="glass rounded-xl p-8 border border-border/50">
         <h2 className="text-xl font-bold mb-4">International Data Processing</h2>
+
         <p className="text-muted-foreground">
           Your data may be processed and stored in countries other than your country of residence, including the United
           States, where data protection laws may differ.
@@ -258,36 +288,59 @@ export default function PrivacyPolicyPage() {
         <ul className="list-disc ml-6 text-muted-foreground space-y-1">
           <li>Request access to the personal data we hold about you</li>
           <li>Request correction of inaccurate data</li>
-          <li>Request deletion of your data, subject to applicable exceptions</li>
-          <li>Disconnect your Google / YouTube account from Tubester</li>
-          <li>Revoke Tubester’s access in your Google account permissions settings</li>
+          <li>Request deletion of your account and associated data</li>
+          <li>Disconnect or revoke Tubester's access to your Google account</li>
+          <li>Object to or restrict certain processing where applicable</li>
+          <li>Request a copy of your data where applicable</li>
         </ul>
 
         <p className="text-muted-foreground mt-4">
-          To exercise these rights or ask questions about privacy, contact us using the details below.
+          You can exercise these rights by contacting us at{' '}
+          <a
+            href="mailto:info@tubester.app?subject=Tubester%20Privacy%20Request"
+            className="text-primary hover:underline"
+          >
+            info@tubester.app
+          </a>
+          .
         </p>
       </section>
 
       <section className="glass rounded-xl p-8 border border-border/50">
-        <h2 className="text-xl font-bold mb-4">Children</h2>
+        <h2 className="text-xl font-bold mb-4">Children's Privacy</h2>
+
         <p className="text-muted-foreground">
-          Tubester is not directed to children under 13, and we do not knowingly collect personal information from
-          children under 13.
+          Tubester is not intended for children under the age of 13. We do not knowingly collect personal data from
+          children under 13. If you believe a child has provided personal data to us, please contact us so we can take
+          appropriate action.
         </p>
       </section>
 
       <section className="glass rounded-xl p-8 border border-border/50">
         <h2 className="text-xl font-bold mb-4">Changes to This Policy</h2>
+
         <p className="text-muted-foreground">
-          We may update this Privacy Policy from time to time. If we make material changes, we will update the “Last
-          updated” date and may provide additional notice where appropriate.
+          We may update this Privacy Policy from time to time. When we make changes, we will update the "Last updated"
+          date above. If changes are material, we may provide additional notice where appropriate.
         </p>
       </section>
 
-      <section className="glass rounded-xl p-8 border border-border/50 text-center">
-        <h2 className="text-xl font-bold mb-4">Contact</h2>
-        <p className="text-muted-foreground mb-2">For privacy questions, deletion requests, or data access requests:</p>
-        <p className="font-medium text-foreground">info@tubester.app</p>
+      <section className="glass rounded-xl p-8 border border-border/50">
+        <h2 className="text-xl font-bold mb-4">Contact Us</h2>
+
+        <div className="space-y-3 text-muted-foreground">
+          <p>
+            If you have questions about this Privacy Policy or how Tubester handles your data, contact us at{' '}
+            <a href="mailto:info@tubester.app?subject=Tubester%20Privacy" className="text-primary hover:underline">
+              info@tubester.app
+            </a>
+            .
+          </p>
+
+          <p>
+            Operator: <strong>99 Soft LLC</strong>, Wyoming, USA.
+          </p>
+        </div>
       </section>
     </div>
   );
