@@ -1,4 +1,4 @@
-# build
+# Build
 FROM node:22.19 AS build
 WORKDIR /app
 
@@ -11,9 +11,11 @@ COPY . .
 
 RUN npm run build
 
-# runtime
-FROM nginx:alpine
+
+# Runtime
+FROM nginxinc/nginx-unprivileged:alpine
+
 COPY default.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html
 
-EXPOSE 80
+EXPOSE 8080
