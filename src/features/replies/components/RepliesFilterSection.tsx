@@ -3,7 +3,7 @@ import { Filter, RotateCcw, X } from 'lucide-react';
 
 import { Button } from '../../../components/ui/button';
 import { VideoSelect } from '../../videos/components/VideoSelect';
-import type { RepliesFilters } from '../../../hooks/useRepliesSearch';
+import type { RepliesFilters } from '../hooks/useRepliesSearch';
 
 interface RepliesFilterSectionProps {
   draftFilters: RepliesFilters;

@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
 import { Button } from '../ui/button';
 
 interface ConfirmDialogState {
@@ -36,7 +36,7 @@ export function useRadixConfirmDialog() {
         <DialogHeader>
           <DialogTitle>Confirm action</DialogTitle>
         </DialogHeader>
-        <p className="text-sm text-muted-foreground">{state.msg}</p>
+        <DialogDescription>{state.msg}</DialogDescription>
         {state.detail && <div className="mt-3 rounded-xl border border-border/30 bg-muted/50 p-3">{state.detail}</div>}
         <DialogFooter>
           <Button variant="outline" onClick={() => close(false)}>
