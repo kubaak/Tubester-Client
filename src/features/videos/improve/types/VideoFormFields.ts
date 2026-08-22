@@ -1,7 +1,7 @@
-import type { UpdateVideoMetadataRequest } from '@/api';
+import type { SaveVideoDraftRequest } from '@/api';
 
 export type VideoFormFields = Pick<
-  UpdateVideoMetadataRequest,
+  SaveVideoDraftRequest,
   'title' | 'description' | 'playlistIds'
 > & {
   tagsText: string;
