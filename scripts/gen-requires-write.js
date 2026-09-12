@@ -1,13 +1,16 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import http from 'node:http';
+import https from 'node:https';
+import { getBackendConfig } from './backend-config.js';
 
-const swaggerUrl = 'http://localhost:5094/swagger/v1/swagger.json';
+const { swaggerUrl } = getBackendConfig();
 const outputPath = path.resolve('./src/auth/requiresWrite.generated.ts');
 
 async function fetchSwaggerJson(url) {
   return new Promise((resolve, reject) => {
-    const request = http.get(url, (response) => {
+    const client = new URL(url).protocol === 'https:' ? https : http;
+    const request = client.get(url, (response) => {
       if (response.statusCode !== 200) {
         reject(new Error(`Failed to fetch Swagger JSON. Status code: ${response.statusCode}`));
         response.resume();
