@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "gen:requiresWrite": "node ./scripts/gen-requires-write.mjs",
+    "gen:requiresWrite": "node ./scripts/gen-requires-write.js",
     "dist": "npm run gen:requiresWrite && vite",
     "dev": "vite",
     "genbuild": "npm run gen:requiresWrite && tsc -b && vite build",

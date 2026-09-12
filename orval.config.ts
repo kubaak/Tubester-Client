@@ -1,9 +1,10 @@
 // orval.config.ts
 import { defineConfig } from 'orval';
+import { getBackendConfig } from './scripts/backend-config.js';
 
 export default defineConfig({
   replies: {
-    input: { target: 'http://localhost:5094/swagger/v1/swagger.json' },
+    input: { target: getBackendConfig().swaggerUrl },
     output: {
       target: 'src/api/index.ts',
       schemas: 'src/api',
