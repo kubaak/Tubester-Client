@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Filter } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import { usePostApiRepliesApprove, usePostApiRepliesBatchIgnore } from '../api/replies/replies';
 import type { BatchDecisionRequest, DraftDecisionDto } from '../api';
 import { useRadixConfirmDialog } from '../components/dialogs/useRadixConfirmDialog';
@@ -17,8 +18,16 @@ const EMPTY_FILTERS: RepliesFilters = {};
 
 export default function RepliesPage() {
   const queryClient = useQueryClient();
-  const { replies, nextPageToken, isInitialLoading, isFetchingNextPage, error, fetchInitial, fetchNextPage } =
-    useRepliesSearch();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const appliedFilters = useMemo<RepliesFilters>(
+    () => ({
+      videoId: searchParams.get('videoId')?.trim() || undefined,
+      originalComment: searchParams.get('originalComment')?.trim() || undefined,
+    }),
+    [searchParams],
+  );
+  const { replies, nextPageToken, isInitialLoading, isFetchingNextPage, error, fetchNextPage, refetch } =
+    useRepliesSearch(appliedFilters);
 
   // Selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -28,8 +37,7 @@ export default function RepliesPage() {
 
   // Filter state - distinct draft vs applied filters
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [draftFilters, setDraftFilters] = useState<RepliesFilters>(EMPTY_FILTERS);
-  const [appliedFilters, setAppliedFilters] = useState<RepliesFilters>(EMPTY_FILTERS);
+  const [draftFilters, setDraftFilters] = useState<RepliesFilters>(appliedFilters);
 
   // Mutations
   const approveMutation = usePostApiRepliesApprove();
@@ -43,29 +51,51 @@ export default function RepliesPage() {
   const allVisibleSelected =
     replies.length > 0 && replies.every((reply) => reply.commentId && selectedIds.has(reply.commentId));
 
-  // Load initial data on mount
-  useEffect(() => {
-    void fetchInitial(EMPTY_FILTERS);
-    // mount only
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   // Handle filter apply
-  const handleApplyFilters = useCallback(async () => {
-    const nextAppliedFilters = draftFilters;
-    setAppliedFilters(nextAppliedFilters);
+  const handleApplyFilters = useCallback(() => {
+    const nextAppliedFilters = {
+      videoId: draftFilters.videoId?.trim() || undefined,
+      originalComment: draftFilters.originalComment?.trim() || undefined,
+    };
+
+    setSearchParams(
+      (previous) => {
+        const next = new URLSearchParams(previous);
+
+        if (nextAppliedFilters.videoId) {
+          next.set('videoId', nextAppliedFilters.videoId);
+        } else {
+          next.delete('videoId');
+        }
+
+        if (nextAppliedFilters.originalComment) {
+          next.set('originalComment', nextAppliedFilters.originalComment);
+        } else {
+          next.delete('originalComment');
+        }
+
+        return next;
+      },
+      { replace: true },
+    );
     setSelectedIds(new Set());
-    await fetchInitial(nextAppliedFilters);
     setIsFilterOpen(false);
-  }, [draftFilters, fetchInitial]);
+  }, [draftFilters, setSearchParams]);
 
   // Handle filter reset
-  const handleResetFilters = useCallback(async () => {
+  const handleResetFilters = useCallback(() => {
     setDraftFilters(EMPTY_FILTERS);
-    setAppliedFilters(EMPTY_FILTERS);
+    setSearchParams(
+      (previous) => {
+        const next = new URLSearchParams(previous);
+        next.delete('videoId');
+        next.delete('originalComment');
+        return next;
+      },
+      { replace: true },
+    );
     setSelectedIds(new Set());
-    await fetchInitial(EMPTY_FILTERS);
-  }, [fetchInitial]);
+  }, [setSearchParams]);
 
   // Handle load more for infinite scroll
   const handleLoadMore = useCallback(() => {
@@ -163,12 +193,12 @@ export default function RepliesPage() {
           return next;
         });
 
-        await fetchInitial(appliedFilters);
+        await refetch();
       } catch {
         // Error is intentionally left to mutation consumers / future toast handling.
       }
     },
-    [appliedFilters, approveMutation, confirm, fetchInitial, isActionPending, replies],
+    [approveMutation, confirm, isActionPending, queryClient, refetch, replies],
   );
 
   // Handle single ignore with confirmation
@@ -193,12 +223,12 @@ export default function RepliesPage() {
           return next;
         });
 
-        await fetchInitial(appliedFilters);
+        await refetch();
       } catch {
         // Error is intentionally left to mutation consumers / future toast handling.
       }
     },
-    [appliedFilters, batchIgnoreMutation, confirm, fetchInitial, isActionPending, replies],
+    [batchIgnoreMutation, confirm, isActionPending, refetch, replies],
   );
 
   // Handle batch approve with confirmation
@@ -239,11 +269,11 @@ export default function RepliesPage() {
         queryKey: getGetApiCreditsBalanceQueryKey(),
       });
       setSelectedIds(new Set());
-      await fetchInitial(appliedFilters);
+      await refetch();
     } catch {
       // Error is intentionally left to mutation consumers / future toast handling.
     }
-  }, [appliedFilters, approveMutation, confirm, fetchInitial, isActionPending, replies, selectedIds]);
+  }, [approveMutation, confirm, isActionPending, queryClient, refetch, replies, selectedIds]);
 
   // Handle batch ignore with confirmation
   const handleBatchIgnore = useCallback(async () => {
@@ -262,11 +292,11 @@ export default function RepliesPage() {
     try {
       await batchIgnoreMutation.mutateAsync({ data: ids });
       setSelectedIds(new Set());
-      await fetchInitial(appliedFilters);
+      await refetch();
     } catch {
       // Error is intentionally left to mutation consumers / future toast handling.
     }
-  }, [appliedFilters, batchIgnoreMutation, confirm, fetchInitial, isActionPending, selectedIds]);
+  }, [batchIgnoreMutation, confirm, isActionPending, refetch, selectedIds]);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -306,7 +336,7 @@ export default function RepliesPage() {
             disabled={isInitialLoading}
             onClick={() => {
               setSelectedIds(new Set());
-              void fetchInitial(appliedFilters);
+              void refetch();
             }}
             className="mt-2"
           >
