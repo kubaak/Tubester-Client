@@ -182,6 +182,87 @@ describe('RepliesPage', () => {
     expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ['credits-balance'] });
   });
 
+  it('bulk approves selected replies using edited text and preserves unedited suggestions', async () => {
+    const user = userEvent.setup();
+    const modifiedReply = 'Thank you for watching! I appreciate your support.';
+    renderPage();
+
+    const card = (await screen.findByRole('heading', { name: 'Video one' })).closest('article');
+    expect(card).not.toBeNull();
+    const replyInput = within(card!).getByRole('textbox');
+    await user.clear(replyInput);
+    await user.type(replyInput, modifiedReply);
+    await user.click(screen.getByRole('checkbox', { name: 'Select all' }));
+    await user.click(screen.getByRole('button', { name: 'Approve selected · 4 credits' }));
+
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText('Do you really want to approve 2 replies?')).toBeInTheDocument();
+    expect(mockApproveReplies).not.toHaveBeenCalled();
+    await user.click(within(dialog).getByRole('button', { name: 'Confirm' }));
+
+    await waitFor(() => {
+      expect(mockApproveReplies).toHaveBeenCalledWith({
+        data: {
+          decisions: [
+            { approvedText: modifiedReply, commentId: 'comment-1' },
+            { approvedText: 'Glad it helped!', commentId: 'comment-2' },
+          ],
+        },
+      });
+    });
+    expect(mockApproveReplies).toHaveBeenCalledTimes(1);
+    expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ['credits-balance'] });
+  });
+
+  it('blocks bulk approval of an empty edited reply until text is restored', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    const card = (await screen.findByRole('heading', { name: 'Video one' })).closest('article');
+    expect(card).not.toBeNull();
+    const replyInput = within(card!).getByRole('textbox');
+    await user.click(screen.getByRole('checkbox', { name: 'Select all' }));
+    await user.clear(replyInput);
+
+    expect(replyInput).toBeInTheDocument();
+    expect(replyInput).toHaveValue('');
+    const approveSelected = screen.getByRole('button', { name: 'Approve selected · 4 credits' });
+    expect(approveSelected).toBeDisabled();
+    await user.type(replyInput, '   ');
+    expect(approveSelected).toBeDisabled();
+    expect(mockApproveReplies).not.toHaveBeenCalled();
+
+    await user.type(replyInput, 'Updated reply');
+    expect(approveSelected).toBeEnabled();
+  });
+
+  it('preserves edited text after bulk approval fails and submits it again on retry', async () => {
+    mockApproveReplies.mockRejectedValueOnce(new Error('Network error'));
+    const user = userEvent.setup();
+    const modifiedReply = 'My edited reply';
+    renderPage();
+
+    const card = (await screen.findByRole('heading', { name: 'Video one' })).closest('article');
+    expect(card).not.toBeNull();
+    const replyInput = within(card!).getByRole('textbox');
+    await user.clear(replyInput);
+    await user.type(replyInput, modifiedReply);
+    await user.click(within(card!).getByRole('checkbox'));
+    await user.click(screen.getByRole('button', { name: 'Approve selected · 2 credits' }));
+    await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Confirm' }));
+
+    await waitFor(() => expect(mockApproveReplies).toHaveBeenCalledTimes(1));
+    expect(replyInput).toHaveValue(modifiedReply);
+    expect(within(card!).getByRole('checkbox')).toBeChecked();
+
+    await user.click(screen.getByRole('button', { name: 'Approve selected · 2 credits' }));
+    await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Confirm' }));
+    await waitFor(() => expect(mockApproveReplies).toHaveBeenCalledTimes(2));
+    expect(mockApproveReplies).toHaveBeenNthCalledWith(2, {
+      data: { decisions: [{ approvedText: modifiedReply, commentId: 'comment-1' }] },
+    });
+  });
+
   it('ignores all selected replies after confirmation', async () => {
     const user = userEvent.setup();
     renderPage();

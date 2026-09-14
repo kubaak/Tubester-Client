@@ -7,6 +7,7 @@ interface ReplyCardProps {
   isSelected: boolean;
   onSelectionChange: (commentId: string, selected: boolean) => void;
   onApprove: (commentId: string, approvedText: string) => void;
+  onReplyTextChange: (commentId: string, text: string) => void;
   onIgnore: (commentId: string) => void;
   isActionPending: boolean;
 }
@@ -39,6 +40,7 @@ export function ReplyCard({
   isSelected,
   onSelectionChange,
   onApprove,
+  onReplyTextChange,
   onIgnore,
   isActionPending,
 }: ReplyCardProps) {
@@ -115,13 +117,14 @@ export function ReplyCard({
             </section>
 
             {/* Suggested reply */}
-            {suggestedText && commentId && (
+            {suggestedText != null && commentId && (
               <section className="space-y-2">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                   Suggested reply
                 </div>
                 <ReplyEditor
-                  defaultValue={suggestedText}
+                  replyText={suggestedText}
+                  onReplyTextChange={onReplyTextChange}
                   commentId={commentId}
                   onApprove={onApprove}
                   onIgnore={onIgnore}
