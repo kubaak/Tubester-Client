@@ -157,7 +157,7 @@ export default function RepliesPage() {
 
   // Handle single approve with confirmation
   const handleApprove = useCallback(
-    async (commentId: string) => {
+    async (commentId: string, replyText: string) => {
       if (isActionPending) {
         return;
       }
@@ -167,7 +167,7 @@ export default function RepliesPage() {
         return;
       }
 
-      const ok = await confirm('Do you really want to approve this reply?', reply.suggestedText);
+      const ok = await confirm('Do you really want to approve this reply?', replyText);
       if (!ok) {
         return;
       }
@@ -175,7 +175,7 @@ export default function RepliesPage() {
       const decisions: DraftDecisionDto[] = [
         {
           commentId,
-          approvedText: reply.suggestedText,
+          approvedText: replyText,
         },
       ];
 

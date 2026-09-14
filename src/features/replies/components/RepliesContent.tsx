@@ -12,7 +12,7 @@ interface RepliesContentProps {
   onLoadMore: () => void;
   selectedIds: Set<string>;
   onSelectionChange: (commentId: string, selected: boolean) => void;
-  onApprove: (commentId: string) => void;
+  onApprove: (commentId: string, replyText: string) => void;
   onIgnore: (commentId: string) => void;
   isActionPending: boolean;
 }
