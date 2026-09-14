@@ -6,24 +6,27 @@ import { EmojiPicker } from '../../../components/ui/EmojiPicker';
 import { useReplyApproveCreditCost } from '../hooks/useReplyApproveCreditCost';
 
 interface ReplyEditorProps {
-  defaultValue: string;
+  replyText: string;
+  onReplyTextChange: (commentId: string, text: string) => void;
   onApprove: (commentId: string, approvedText: string) => void;
   onIgnore: (commentId: string) => void;
   commentId: string;
   isActionPending: boolean;
 }
 
-export function ReplyEditor({ defaultValue, commentId, onApprove, onIgnore, isActionPending }: ReplyEditorProps) {
-  const [replyText, setReplyText] = useState(defaultValue);
+export function ReplyEditor({
+  replyText,
+  onReplyTextChange,
+  commentId,
+  onApprove,
+  onIgnore,
+  isActionPending,
+}: ReplyEditorProps) {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const emojiButtonRef = useRef<HTMLButtonElement>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
 
   const creditCost = useReplyApproveCreditCost();
-
-  useEffect(() => {
-    setReplyText(defaultValue);
-  }, [defaultValue]);
 
   // Close emoji picker when clicking outside
   useEffect(() => {
@@ -48,7 +51,7 @@ export function ReplyEditor({ defaultValue, commentId, onApprove, onIgnore, isAc
   }, [showEmojiPicker]);
 
   const handleEmojiSelect = (emoji: string) => {
-    setReplyText((prev) => prev + emoji);
+    onReplyTextChange(commentId, replyText + emoji);
     setShowEmojiPicker(false);
   };
 
@@ -81,7 +84,7 @@ export function ReplyEditor({ defaultValue, commentId, onApprove, onIgnore, isAc
       <div className="relative rounded-2xl border border-primary/20 bg-primary/5">
         <Textarea
           value={replyText}
-          onChange={(e) => setReplyText(e.target.value)}
+          onChange={(e) => onReplyTextChange(commentId, e.target.value)}
           rows={2}
           disabled={isActionPending}
           className="border-0 bg-transparent shadow-none focus-visible:ring-0"

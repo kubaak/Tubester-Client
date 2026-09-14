@@ -13,6 +13,7 @@ interface RepliesContentProps {
   selectedIds: Set<string>;
   onSelectionChange: (commentId: string, selected: boolean) => void;
   onApprove: (commentId: string, replyText: string) => void;
+  onReplyTextChange: (commentId: string, text: string) => void;
   onIgnore: (commentId: string) => void;
   isActionPending: boolean;
 }
@@ -26,6 +27,7 @@ export function RepliesContent({
   selectedIds,
   onSelectionChange,
   onApprove,
+  onReplyTextChange,
   onIgnore,
   isActionPending,
 }: RepliesContentProps) {
@@ -92,6 +94,7 @@ export function RepliesContent({
             isSelected={isSelected}
             onSelectionChange={onSelectionChange}
             onApprove={onApprove}
+            onReplyTextChange={onReplyTextChange}
             onIgnore={onIgnore}
             isActionPending={isActionPending}
           />

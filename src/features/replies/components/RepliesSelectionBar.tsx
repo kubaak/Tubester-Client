@@ -10,6 +10,7 @@ interface RepliesSelectionBarProps {
   onClearSelection: () => void;
   onBatchIgnore: () => void;
   onBatchApprove: () => void;
+  hasInvalidSelection: boolean;
   isActionPending: boolean;
 }
 
@@ -20,12 +21,14 @@ export function RepliesSelectionBar({
   onClearSelection,
   onBatchIgnore,
   onBatchApprove,
+  hasInvalidSelection,
   isActionPending,
 }: RepliesSelectionBarProps) {
   const hasSelection = selectedCount > 0;
   const creditCost = useReplyApproveCreditCost(selectedCount);
 
-  const canBatchApprove = hasSelection && !isActionPending && creditCost.isReady && !creditCost.insufficientBalance;
+  const canBatchApprove =
+    hasSelection && !hasInvalidSelection && !isActionPending && creditCost.isReady && !creditCost.insufficientBalance;
 
   const batchApproveButtonLabel = (() => {
     if (creditCost.isLoading) {

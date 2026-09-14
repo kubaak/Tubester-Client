@@ -26,8 +26,37 @@ export default function RepliesPage() {
     }),
     [searchParams],
   );
-  const { replies, nextPageToken, isInitialLoading, isFetchingNextPage, error, fetchNextPage, refetch } =
-    useRepliesSearch(appliedFilters);
+  const {
+    replies: serverReplies,
+    nextPageToken,
+    isInitialLoading,
+    isFetchingNextPage,
+    error,
+    fetchNextPage,
+    refetch,
+  } = useRepliesSearch(appliedFilters);
+
+  const [editedReplies, setEditedReplies] = useState<ReadonlyMap<string, string>>(new Map());
+  const replies = useMemo(
+    () =>
+      serverReplies.map((reply) => ({
+        ...reply,
+        suggestedText: editedReplies.get(reply.commentId ?? '') ?? reply.suggestedText,
+      })),
+    [serverReplies, editedReplies],
+  );
+
+  const handleReplyTextChange = useCallback((commentId: string, text: string) => {
+    setEditedReplies((previous) => new Map(previous).set(commentId, text));
+  }, []);
+
+  const clearReplyDrafts = useCallback((commentIds: string[]) => {
+    setEditedReplies((previous) => {
+      const next = new Map(previous);
+      commentIds.forEach((commentId) => next.delete(commentId));
+      return next;
+    });
+  }, []);
 
   // Selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -50,6 +79,9 @@ export default function RepliesPage() {
 
   const allVisibleSelected =
     replies.length > 0 && replies.every((reply) => reply.commentId && selectedIds.has(reply.commentId));
+  const hasInvalidSelection = Array.from(selectedIds).some(
+    (commentId) => !replies.find((reply) => reply.commentId === commentId)?.suggestedText?.trim(),
+  );
 
   // Handle filter apply
   const handleApplyFilters = useCallback(() => {
@@ -163,7 +195,7 @@ export default function RepliesPage() {
       }
 
       const reply = replies.find((r) => r.commentId === commentId);
-      if (!reply?.suggestedText) {
+      if (!reply || !replyText.trim()) {
         return;
       }
 
@@ -183,6 +215,7 @@ export default function RepliesPage() {
 
       try {
         await approveMutation.mutateAsync({ data: request });
+        clearReplyDrafts([commentId]);
         await queryClient.invalidateQueries({
           queryKey: getGetApiCreditsBalanceQueryKey(),
         });
@@ -198,7 +231,7 @@ export default function RepliesPage() {
         // Error is intentionally left to mutation consumers / future toast handling.
       }
     },
-    [approveMutation, confirm, isActionPending, queryClient, refetch, replies],
+    [approveMutation, clearReplyDrafts, confirm, isActionPending, queryClient, refetch, replies],
   );
 
   // Handle single ignore with confirmation
@@ -216,6 +249,7 @@ export default function RepliesPage() {
 
       try {
         await batchIgnoreMutation.mutateAsync({ data: [commentId] });
+        clearReplyDrafts([commentId]);
 
         setSelectedIds((prev) => {
           const next = new Set(prev);
@@ -228,12 +262,12 @@ export default function RepliesPage() {
         // Error is intentionally left to mutation consumers / future toast handling.
       }
     },
-    [batchIgnoreMutation, confirm, isActionPending, refetch, replies],
+    [batchIgnoreMutation, clearReplyDrafts, confirm, isActionPending, refetch, replies],
   );
 
   // Handle batch approve with confirmation
   const handleBatchApprove = useCallback(async () => {
-    if (isActionPending || selectedIds.size === 0) {
+    if (isActionPending || selectedIds.size === 0 || hasInvalidSelection) {
       return;
     }
 
@@ -265,6 +299,7 @@ export default function RepliesPage() {
 
     try {
       await approveMutation.mutateAsync({ data: request });
+      clearReplyDrafts(Array.from(selectedIds));
       await queryClient.invalidateQueries({
         queryKey: getGetApiCreditsBalanceQueryKey(),
       });
@@ -273,7 +308,17 @@ export default function RepliesPage() {
     } catch {
       // Error is intentionally left to mutation consumers / future toast handling.
     }
-  }, [approveMutation, confirm, isActionPending, queryClient, refetch, replies, selectedIds]);
+  }, [
+    approveMutation,
+    clearReplyDrafts,
+    confirm,
+    hasInvalidSelection,
+    isActionPending,
+    queryClient,
+    refetch,
+    replies,
+    selectedIds,
+  ]);
 
   // Handle batch ignore with confirmation
   const handleBatchIgnore = useCallback(async () => {
@@ -291,12 +336,13 @@ export default function RepliesPage() {
 
     try {
       await batchIgnoreMutation.mutateAsync({ data: ids });
+      clearReplyDrafts(ids);
       setSelectedIds(new Set());
       await refetch();
     } catch {
       // Error is intentionally left to mutation consumers / future toast handling.
     }
-  }, [batchIgnoreMutation, confirm, isActionPending, refetch, selectedIds]);
+  }, [batchIgnoreMutation, clearReplyDrafts, confirm, isActionPending, refetch, selectedIds]);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -354,6 +400,7 @@ export default function RepliesPage() {
           onClearSelection={handleClearSelection}
           onBatchIgnore={handleBatchIgnore}
           onBatchApprove={handleBatchApprove}
+          hasInvalidSelection={hasInvalidSelection}
           isActionPending={isActionPending}
         />
       )}
@@ -368,6 +415,7 @@ export default function RepliesPage() {
         selectedIds={selectedIds}
         onSelectionChange={handleSelectionChange}
         onApprove={handleApprove}
+        onReplyTextChange={handleReplyTextChange}
         onIgnore={handleIgnore}
         isActionPending={isActionPending}
       />
