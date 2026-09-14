@@ -2,14 +2,14 @@ import { jest } from '@jest/globals';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
 
 import type { ReplyListItemDto } from '@/api';
 import RepliesPage from './RepliesPage';
 
 const mockInvalidateQueries = jest.fn<() => Promise<void>>();
-const mockSearchReplies = jest.fn<
-  (input: unknown) => Promise<{ data: { items: ReplyListItemDto[]; nextPageToken: string | null } }>
->();
+const mockSearchReplies =
+  jest.fn<(input: unknown) => Promise<{ data: { items: ReplyListItemDto[]; nextPageToken: string | null } }>>();
 const mockApproveReplies = jest.fn<() => Promise<void>>();
 const mockIgnoreReplies = jest.fn<() => Promise<void>>();
 const mockSearchVideos = jest.fn();
@@ -41,9 +41,9 @@ const readyCreditCostsQuery = {
 };
 
 jest.mock('@/api/replies/replies', () => ({
+  postApiRepliesSuggestedSearch: (input: unknown) => mockSearchReplies(input),
   usePostApiRepliesApprove: () => mockApproveMutation,
   usePostApiRepliesBatchIgnore: () => mockIgnoreMutation,
-  usePostApiRepliesSuggestedSearch: () => ({ mutateAsync: mockSearchReplies }),
 }));
 
 jest.mock('@/api/credits/credits', () => ({
@@ -91,7 +91,9 @@ function renderPage() {
 
   return render(
     <QueryClientProvider client={queryClient}>
-      <RepliesPage />
+      <MemoryRouter>
+        <RepliesPage />
+      </MemoryRouter>
     </QueryClientProvider>,
   );
 }
@@ -109,12 +111,10 @@ describe('RepliesPage', () => {
     expect(await screen.findByRole('heading', { name: 'Video one' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Video two' })).toBeInTheDocument();
     expect(mockSearchReplies).toHaveBeenCalledWith({
-      data: {
-        originalComment: undefined,
-        pageSize: 3,
-        pageToken: undefined,
-        videoId: undefined,
-      },
+      originalComment: undefined,
+      pageSize: 3,
+      pageToken: undefined,
+      videoId: undefined,
     });
   });
 
@@ -129,12 +129,10 @@ describe('RepliesPage', () => {
 
     await waitFor(() => {
       expect(mockSearchReplies).toHaveBeenLastCalledWith({
-        data: {
-          originalComment: 'helpful',
-          pageSize: 3,
-          pageToken: undefined,
-          videoId: undefined,
-        },
+        originalComment: 'helpful',
+        pageSize: 3,
+        pageToken: undefined,
+        videoId: undefined,
       });
     });
     expect(screen.queryByText('Filters')).not.toBeInTheDocument();
