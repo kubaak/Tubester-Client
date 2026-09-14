@@ -158,6 +158,30 @@ describe('RepliesPage', () => {
     expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ['credits-balance'] });
   });
 
+  it('approves an edited reply after confirming and refreshes the credit balance', async () => {
+    const user = userEvent.setup();
+    const modifiedReply = 'Thank you for watching! I appreciate your support.';
+    renderPage();
+
+    const card = (await screen.findByRole('heading', { name: 'Video one' })).closest('article');
+    expect(card).not.toBeNull();
+    const replyInput = within(card!).getByRole('textbox');
+    await user.clear(replyInput);
+    await user.type(replyInput, modifiedReply);
+    await user.click(within(card!).getByRole('button', { name: 'Approve · 2 credits' }));
+    expect(await screen.findByText('Do you really want to approve this reply?')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Confirm' }));
+
+    await waitFor(() => {
+      expect(mockApproveReplies).toHaveBeenCalledWith({
+        data: {
+          decisions: [{ approvedText: modifiedReply, commentId: 'comment-1' }],
+        },
+      });
+    });
+    expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ['credits-balance'] });
+  });
+
   it('ignores all selected replies after confirmation', async () => {
     const user = userEvent.setup();
     renderPage();
